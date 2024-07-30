@@ -1,7 +1,8 @@
-use crate::actions::Actions;
+use crate::actions::GameAction;
 use crate::loading::TextureAssets;
 use crate::GameState;
 use bevy::prelude::*;
+use leafwing_input_manager::action_state::ActionState;
 
 pub struct PlayerPlugin;
 
@@ -29,18 +30,22 @@ fn spawn_player(mut commands: Commands, textures: Res<TextureAssets>) {
 
 fn move_player(
     time: Res<Time>,
-    actions: Res<Actions>,
+    actions: Res<ActionState<GameAction>>,
     mut player_query: Query<&mut Transform, With<Player>>,
 ) {
-    if actions.player_movement.is_none() {
+    if !actions.pressed(&GameAction::Move) {
         return;
     }
     let speed = 150.;
+    let axis_pair = actions
+        .clamped_axis_pair(&GameAction::Move)
+        .expect("Move was pressed; impossible to get here otherwise");
     let movement = Vec3::new(
-        actions.player_movement.unwrap().x * speed * time.delta_seconds(),
-        actions.player_movement.unwrap().y * speed * time.delta_seconds(),
+        axis_pair.x() * speed * time.delta_seconds(),
+        axis_pair.y() * speed * time.delta_seconds(),
         0.,
     );
+
     for mut player_transform in &mut player_query {
         player_transform.translation += movement;
     }

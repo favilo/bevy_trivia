@@ -1,6 +1,18 @@
-use crate::loading::TextureAssets;
+use bevy::ecs::system::RunSystemOnce;
+use bevy::{prelude::*, ui};
+use bevy_mod_stylebuilder::{StyleBuilder, StyleBuilderLayout};
+use bevy_quill::{IntoViewChild, View, ViewChild};
+use credits::CreditsMenu;
+use leafwing_input_manager::action_state::ActionState;
+
+use crate::actions::GameAction;
 use crate::GameState;
-use bevy::prelude::*;
+
+mod credits;
+mod main_menu;
+mod utils;
+
+use main_menu::MainMenu;
 
 pub struct MenuPlugin;
 
@@ -8,215 +20,96 @@ pub struct MenuPlugin;
 /// The menu is only drawn during the State `GameState::Menu` and is removed when that state is exited
 impl Plugin for MenuPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(GameState::Menu), setup_menu)
-            .add_systems(Update, click_play_button.run_if(in_state(GameState::Menu)))
-            .add_systems(OnExit(GameState::Menu), cleanup_menu);
+        app.add_sub_state::<WhichMenu>()
+            .add_systems(
+                StateTransition,
+                last_transition::<WhichMenu>
+                    .pipe(menu_transition)
+                    .run_if(in_state(GameState::Menu)),
+            )
+            .add_systems(Update, move_focus.run_if(in_state(GameState::Menu)));
     }
 }
 
-#[derive(Component)]
-struct ButtonColors {
-    normal: Color,
-    hovered: Color,
+#[derive(Clone, Debug, PartialEq, Eq, Hash, SubStates, Default)]
+#[source(GameState = GameState::Menu)]
+pub enum WhichMenu {
+    #[default]
+    Main,
+    Play,
+    Settings,
+    Credits,
 }
 
-impl Default for ButtonColors {
-    fn default() -> Self {
-        ButtonColors {
-            normal: Color::linear_rgb(0.15, 0.15, 0.15),
-            hovered: Color::linear_rgb(0.25, 0.25, 0.25),
+impl WhichMenu {
+    pub fn to_view(&self) -> ViewChild {
+        match self {
+            Self::Main => MainMenu.into_view_child(),
+            Self::Play => todo!(),
+            Self::Settings => todo!(),
+            Self::Credits => CreditsMenu.into_view_child(),
         }
     }
 }
 
 #[derive(Component)]
-struct Menu;
+struct MenuMarker;
 
-fn setup_menu(mut commands: Commands, textures: Res<TextureAssets>) {
-    info!("menu");
-    commands.spawn(Camera2dBundle::default());
-    commands
-        .spawn((
-            NodeBundle {
-                style: Style {
-                    width: Val::Percent(100.0),
-                    height: Val::Percent(100.0),
-                    flex_direction: FlexDirection::Column,
-                    align_items: AlignItems::Center,
-                    justify_content: JustifyContent::Center,
-                    ..default()
-                },
-                ..default()
-            },
-            Menu,
-        ))
-        .with_children(|children| {
-            let button_colors = ButtonColors::default();
-            children
-                .spawn((
-                    ButtonBundle {
-                        style: Style {
-                            width: Val::Px(140.0),
-                            height: Val::Px(50.0),
-                            justify_content: JustifyContent::Center,
-                            align_items: AlignItems::Center,
-                            ..Default::default()
-                        },
-                        background_color: button_colors.normal.into(),
-                        ..Default::default()
-                    },
-                    button_colors,
-                    ChangeState(GameState::Playing),
-                ))
-                .with_children(|parent| {
-                    parent.spawn(TextBundle::from_section(
-                        "Play",
-                        TextStyle {
-                            font_size: 40.0,
-                            color: Color::linear_rgb(0.9, 0.9, 0.9),
-                            ..default()
-                        },
-                    ));
-                });
-        });
-    commands
-        .spawn((
-            NodeBundle {
-                style: Style {
-                    flex_direction: FlexDirection::Row,
-                    align_items: AlignItems::Center,
-                    justify_content: JustifyContent::SpaceAround,
-                    bottom: Val::Px(5.),
-                    width: Val::Percent(100.),
-                    position_type: PositionType::Absolute,
-                    ..default()
-                },
-                ..default()
-            },
-            Menu,
-        ))
-        .with_children(|children| {
-            children
-                .spawn((
-                    ButtonBundle {
-                        style: Style {
-                            width: Val::Px(170.0),
-                            height: Val::Px(50.0),
-                            justify_content: JustifyContent::SpaceAround,
-                            align_items: AlignItems::Center,
-                            padding: UiRect::all(Val::Px(5.)),
-                            ..Default::default()
-                        },
-                        background_color: Color::NONE.into(),
-                        ..Default::default()
-                    },
-                    ButtonColors {
-                        normal: Color::NONE,
-                        ..default()
-                    },
-                    OpenLink("https://bevyengine.org"),
-                ))
-                .with_children(|parent| {
-                    parent.spawn(TextBundle::from_section(
-                        "Made with Bevy",
-                        TextStyle {
-                            font_size: 15.0,
-                            color: Color::linear_rgb(0.9, 0.9, 0.9),
-                            ..default()
-                        },
-                    ));
-                    parent.spawn(ImageBundle {
-                        image: textures.bevy.clone().into(),
-                        style: Style {
-                            width: Val::Px(32.),
-                            ..default()
-                        },
-                        ..default()
-                    });
-                });
-            children
-                .spawn((
-                    ButtonBundle {
-                        style: Style {
-                            width: Val::Px(170.0),
-                            height: Val::Px(50.0),
-                            justify_content: JustifyContent::SpaceAround,
-                            align_items: AlignItems::Center,
-                            padding: UiRect::all(Val::Px(5.)),
-                            ..default()
-                        },
-                        background_color: Color::NONE.into(),
-                        ..Default::default()
-                    },
-                    ButtonColors {
-                        normal: Color::NONE,
-                        hovered: Color::linear_rgb(0.25, 0.25, 0.25),
-                    },
-                    OpenLink("https://github.com/NiklasEi/bevy_game_template"),
-                ))
-                .with_children(|parent| {
-                    parent.spawn(TextBundle::from_section(
-                        "Open source",
-                        TextStyle {
-                            font_size: 15.0,
-                            color: Color::linear_rgb(0.9, 0.9, 0.9),
-                            ..default()
-                        },
-                    ));
-                    parent.spawn(ImageBundle {
-                        image: textures.github.clone().into(),
-                        style: Style {
-                            width: Val::Px(32.),
-                            ..default()
-                        },
-                        ..default()
-                    });
-                });
-        });
+fn menu_style(ss: &mut StyleBuilder) {
+    ss.display(Display::Flex)
+        .flex_direction(FlexDirection::Column)
+        .position(ui::PositionType::Absolute)
+        .padding(50)
+        .left(0)
+        .right(0)
+        .bottom(0)
+        .top(0)
+        .row_gap(10)
+        .align_items(AlignItems::Center);
 }
 
-#[derive(Component)]
-struct ChangeState(GameState);
-
-#[derive(Component)]
-struct OpenLink(&'static str);
-
-fn click_play_button(
-    mut next_state: ResMut<NextState<GameState>>,
-    mut interaction_query: Query<
-        (
-            &Interaction,
-            &mut BackgroundColor,
-            &ButtonColors,
-            Option<&ChangeState>,
-            Option<&OpenLink>,
-        ),
-        (Changed<Interaction>, With<Button>),
-    >,
-) {
-    for (interaction, mut color, button_colors, change_state, open_link) in &mut interaction_query {
-        match *interaction {
-            Interaction::Pressed => {
-                if let Some(state) = change_state {
-                    next_state.set(state.0.clone());
-                } else if let Some(link) = open_link {
-                    if let Err(error) = webbrowser::open(link.0) {
-                        warn!("Failed to open link {error:?}");
-                    }
-                }
-            }
-            Interaction::Hovered => {
-                *color = button_colors.hovered.into();
-            }
-            Interaction::None => {
-                *color = button_colors.normal.into();
-            }
-        }
-    }
+fn menu_row_style(ss: &mut StyleBuilder) {
+    ss.display(Display::Flex)
+        .width(Val::Percent(75.0))
+        .flex_direction(FlexDirection::Row)
+        .align_items(AlignItems::Center)
+        .column_gap(10);
 }
 
-fn cleanup_menu(mut commands: Commands, menu: Query<Entity, With<Menu>>) {
+fn menu_button_style(ss: &mut StyleBuilder) {
+    ss.display(Display::Flex)
+        .width(Val::Percent(75.0))
+        .flex_direction(FlexDirection::Row)
+        .align_items(AlignItems::Center)
+        .column_gap(10);
+}
+
+fn setup_menu(mut commands: Commands, current_state: Res<State<WhichMenu>>) {
+    commands.spawn((current_state.to_view().to_root(), MenuMarker));
+}
+
+fn cleanup_menu(mut commands: Commands, menu: Query<Entity, With<MenuMarker>>) {
+    info!("cleanup_menu");
     for entity in menu.iter() {
-        commands.entity(entity).despawn_recursive();
+        commands.entity(entity).despawn();
     }
+}
+
+/// This system is responsible for transitioning between the different menu states
+/// It is only active during the State `GameState::Menu`
+fn menu_transition(transition: In<Option<StateTransitionEvent<WhichMenu>>>, world: &mut World) {
+    let Some(transition) = transition.0 else {
+        return;
+    };
+
+    if transition.exited == transition.entered {
+        return;
+    }
+
+    let _ = world.run_system_once(cleanup_menu);
+    let _ = world.run_system_once(setup_menu);
+}
+
+fn move_focus(actions: Res<ActionState<GameAction>>) {
+    if actions.just_pressed(&GameAction::Move) {}
 }
