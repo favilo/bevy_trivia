@@ -1,5 +1,5 @@
 use crate::actions::GameAction;
-use crate::loading::TextureAssets;
+use crate::loading::{TextureAssets, BEVY};
 use crate::GameState;
 use bevy::prelude::*;
 use leafwing_input_manager::action_state::ActionState;
@@ -21,7 +21,7 @@ impl Plugin for PlayerPlugin {
 fn spawn_player(mut commands: Commands, textures: Res<TextureAssets>) {
     commands
         .spawn(SpriteBundle {
-            texture: textures.bevy.clone(),
+            texture: textures.images[BEVY].clone(),
             transform: Transform::from_translation(Vec3::new(0., 0., 1.)),
             ..Default::default()
         })

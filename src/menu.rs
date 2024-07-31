@@ -1,16 +1,19 @@
+use ::serde::{Deserialize, Serialize};
 use bevy::ecs::system::RunSystemOnce;
 use bevy::{prelude::*, ui};
 use bevy_mod_stylebuilder::{StyleBuilder, StyleBuilderLayout};
 use bevy_quill::{IntoViewChild, View, ViewChild};
-use credits::CreditsMenu;
 use leafwing_input_manager::action_state::ActionState;
+use serde::Menu;
+
+use credits::CreditsMenu;
 
 use crate::actions::GameAction;
+use crate::loading::{MenuAssets, TextureAssets};
 use crate::GameState;
 
-mod credits;
-mod main_menu;
-mod utils;
+pub mod serde;
+pub mod utils;
 
 use main_menu::MainMenu;
 
@@ -20,7 +23,8 @@ pub struct MenuPlugin;
 /// The menu is only drawn during the State `GameState::Menu` and is removed when that state is exited
 impl Plugin for MenuPlugin {
     fn build(&self, app: &mut App) {
-        app.add_sub_state::<WhichMenu>()
+        app.init_resource::<MenuStack>()
+            .add_sub_state::<WhichMenu>()
             .add_systems(
                 StateTransition,
                 last_transition::<WhichMenu>
@@ -31,7 +35,12 @@ impl Plugin for MenuPlugin {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash, SubStates, Default)]
+#[derive(Default, Deref, DerefMut, Clone, Debug, Resource)]
+pub struct MenuStack(Vec<WhichMenu>);
+
+#[derive(
+    Clone, Copy, Debug, PartialEq, Eq, Hash, SubStates, Default, TypePath, Serialize, Deserialize,
+)]
 #[source(GameState = GameState::Menu)]
 pub enum WhichMenu {
     #[default]
@@ -42,13 +51,17 @@ pub enum WhichMenu {
 }
 
 impl WhichMenu {
-    pub fn to_view(&self) -> ViewChild {
-        match self {
-            Self::Main => MainMenu.into_view_child(),
-            Self::Play => todo!(),
-            Self::Settings => todo!(),
-            Self::Credits => CreditsMenu.into_view_child(),
-        }
+    pub fn to_view(&self, assets: &MenuAssets, menus: &Assets<Menu>) -> ViewChild {
+        menus
+            .get(match self {
+                Self::Main => &assets.main,
+                Self::Play => &assets.play,
+                Self::Settings => &assets.settings,
+                Self::Credits => &assets.credits,
+            })
+            .expect("main menu")
+            .clone()
+            .into_view_child()
     }
 }
 
@@ -84,8 +97,13 @@ fn menu_button_style(ss: &mut StyleBuilder) {
         .column_gap(10);
 }
 
-fn setup_menu(mut commands: Commands, current_state: Res<State<WhichMenu>>) {
-    commands.spawn((current_state.to_view().to_root(), MenuMarker));
+fn setup_menu(
+    mut commands: Commands,
+    current_state: Res<State<WhichMenu>>,
+    assets: Res<MenuAssets>,
+    menus: Res<Assets<Menu>>,
+) {
+    commands.spawn((current_state.to_view(&assets, &menus).to_root(), MenuMarker));
 }
 
 fn cleanup_menu(mut commands: Commands, menu: Query<Entity, With<MenuMarker>>) {

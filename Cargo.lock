@@ -478,6 +478,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy_common_assets"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6f631ce2863f3b6f1af3fa24143363b9fbd21c44218caad495a17b83e6968256"
+dependencies = [
+ "anyhow",
+ "bevy",
+ "ron",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
 name = "bevy_core"
 version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1322,6 +1335,7 @@ version = "0.1.0"
 dependencies = [
  "bevy",
  "bevy_asset_loader",
+ "bevy_common_assets",
  "bevy_kira_audio",
  "bevy_mod_picking",
  "bevy_mod_stylebuilder",
@@ -1332,6 +1346,7 @@ dependencies = [
  "leafwing-input-manager",
  "log",
  "rand",
+ "serde",
  "webbrowser",
  "winit",
 ]
