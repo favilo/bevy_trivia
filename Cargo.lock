@@ -1361,6 +1361,7 @@ dependencies = [
  "log",
  "rand",
  "serde",
+ "web-sys",
  "webbrowser",
  "winit",
 ]
