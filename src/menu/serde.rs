@@ -12,12 +12,22 @@ use serde::{Deserialize, Serialize};
 use crate::loading::TextureAssets;
 
 use super::{
-    menu_button_style, menu_row_style, menu_style, utils::open_link, MenuStack, WhichMenu,
+    menu_button_style, menu_row_style, menu_style,
+    utils::{is_false, open_link},
+    MenuStack, WhichMenu,
 };
 
+/// A menu for the game
 #[derive(Asset, Serialize, Deserialize, TypePath, Clone, Debug, PartialEq)]
 pub struct Menu {
+    /// The title of the menu
     title: String,
+
+    /// Whether this is the main menu, or not
+    #[serde(skip_serializing_if = "is_false", default)]
+    main_menu: bool,
+
+    /// The contents of the menu
     children: Vec<MenuItem>,
 }
 
@@ -40,17 +50,40 @@ impl ViewTemplate for Menu {
                     .iter()
                     .map(|item| item.clone().into_view_child())
                     .collect::<Vec<_>>(),
+                Cond::new(
+                    self.main_menu,
+                    MenuItem::Button(Button {
+                        label: "Quit".to_string(),
+                        action: MenuAction::Quit,
+                    }),
+                    MenuItem::Button(Button {
+                        label: "Back".to_string(),
+                        action: MenuAction::Back,
+                    }),
+                ),
             ))
     }
 }
 
+/// An item to render in the menu
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, TypePath)]
 pub enum MenuItem {
+    /// A label to display
     Label(Label),
+
+    /// A spacer to fill the space
     Spacer,
+
+    /// A sub menu to switch to
     SubMenu(SubMenu),
+
+    /// A button to click
     Button(Button),
+
+    /// A link to open in a browser
     Link(Link),
+
+    /// A row of several items
     Row(Row),
 }
 
@@ -70,15 +103,24 @@ impl ViewTemplate for MenuItem {
     }
 }
 
+/// The action to perform when a button is clicked
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, TypePath)]
 pub enum MenuAction {
+    /// Quit the game
     Quit,
+
+    /// Go back to the previous menu in the stack
     Back,
 }
 
+/// A button to click
+/// Currently only supports the `Quit` and `Back` actions
 #[derive(Serialize, Deserialize, TypePath, Clone, Debug, PartialEq)]
 pub struct Button {
+    /// The label to display
     label: String,
+
+    /// The action to perform when the button is clicked
     action: MenuAction,
 }
 
@@ -94,6 +136,7 @@ impl ViewTemplate for Button {
                 move |mut next_state: ResMut<NextState<WhichMenu>>,
                       mut menu_stack: ResMut<MenuStack>,
                       mut app_exit: EventWriter<AppExit>| {
+                    debug!("Menu Stack: {:?}", menu_stack);
                     match action {
                         MenuAction::Quit => {
                             app_exit.send(AppExit::Success);
@@ -114,11 +157,22 @@ impl ViewTemplate for Button {
     }
 }
 
+/// A label to display
 #[derive(Serialize, Deserialize, TypePath, Clone, Debug, PartialEq)]
 pub struct Label {
+    /// The label to display
     label: String,
+
+    /// The height of the label
+    #[serde(skip_serializing_if = "Option::is_none", default)]
     height: Option<f32>,
+
+    /// The font size of the label
+    #[serde(skip_serializing_if = "Option::is_none", default)]
     font_size: Option<f32>,
+
+    /// The color of the label
+    #[serde(skip_serializing_if = "Option::is_none", default)]
     color: Option<Color>,
 }
 
@@ -147,10 +201,17 @@ impl ViewTemplate for Label {
     }
 }
 
+/// A link to open in a browser
 #[derive(Serialize, Deserialize, TypePath, Clone, Debug, PartialEq)]
 pub struct Link {
+    /// The label to display
     label: String,
+
+    /// The url to open when the link is clicked
     url: String,
+
+    /// The icon to display next to the label
+    #[serde(skip_serializing_if = "Option::is_none", default)]
     icon: Option<String>,
 }
 
@@ -163,7 +224,7 @@ impl ViewTemplate for Link {
         let icon = self.icon.clone();
 
         QuillButton::new()
-            .on_click(open_link(cx, Box::leak(Box::new(url))))
+            .on_click(open_link(cx, url))
             .style(menu_button_style)
             .size(Size::Xl)
             .children((
@@ -176,11 +237,21 @@ impl ViewTemplate for Link {
     }
 }
 
+/// The variant of the button: Primary or Default
 #[derive(Serialize, Deserialize, TypePath, Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
 pub enum MenuButtonVariant {
+    /// The default button style
     #[default]
     Default,
+
+    /// The primary button style
     Primary,
+}
+
+impl MenuButtonVariant {
+    pub fn is_default(&self) -> bool {
+        matches!(self, Self::Default)
+    }
 }
 
 impl From<MenuButtonVariant> for ButtonVariant {
@@ -192,11 +263,18 @@ impl From<MenuButtonVariant> for ButtonVariant {
     }
 }
 
+/// A button that switches to a different menu when clicked
 #[derive(Serialize, Deserialize, TypePath, Clone, Debug, PartialEq)]
 pub struct SubMenu {
+    /// The label to display on the button
     label: String,
+
+    /// The menu to switch to
     menu: WhichMenu,
-    varaint: Option<MenuButtonVariant>,
+
+    /// The variant of the button: Primary or Default
+    #[serde(skip_serializing_if = "MenuButtonVariant::is_default", default)]
+    variant: MenuButtonVariant,
 }
 
 impl ViewTemplate for SubMenu {
@@ -205,24 +283,24 @@ impl ViewTemplate for SubMenu {
     fn create(&self, cx: &mut bevy_quill::Cx) -> Self::View {
         let menu = self.menu;
 
-        let mut button = QuillButton::new()
-            .on_click(
-                cx.create_callback(move |mut next_state: ResMut<NextState<WhichMenu>>| {
+        QuillButton::new()
+            .on_click(cx.create_callback(
+                move |mut next_state: ResMut<NextState<WhichMenu>>,
+                      current_state: Res<State<WhichMenu>>,
+                      mut menu_stack: ResMut<MenuStack>| {
+                    menu_stack.push(current_state.to_owned());
                     next_state.set(menu);
-                }),
-            )
+                    debug!("Menu Stack: {:?}", menu_stack);
+                },
+            ))
             .style(menu_button_style)
             .size(Size::Xl)
-            .children(self.label.clone());
-
-        if let Some(variant) = self.varaint {
-            button = button.variant(variant.into());
-        }
-
-        button
+            .children(self.label.clone())
+            .variant(self.variant.into())
     }
 }
 
+/// A row of several items
 #[derive(Serialize, Deserialize, TypePath, Clone, Debug, PartialEq)]
 pub struct Row(Vec<MenuItem>);
 

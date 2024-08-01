@@ -2,10 +2,5 @@ Menu(
     title: "Play",
     children: [
         Spacer,
-        Button((
-            label: "Back",
-            action: Back,
-            variant: None,
-        )),
     ],
 )

@@ -1,21 +1,14 @@
 use ::serde::{Deserialize, Serialize};
-use bevy::ecs::system::RunSystemOnce;
-use bevy::{prelude::*, ui};
+use bevy::{ecs::system::RunSystemOnce, prelude::*, ui};
 use bevy_mod_stylebuilder::{StyleBuilder, StyleBuilderLayout};
-use bevy_quill::{IntoViewChild, View, ViewChild};
+use bevy_quill::View;
 use leafwing_input_manager::action_state::ActionState;
 use serde::Menu;
 
-use credits::CreditsMenu;
-
-use crate::actions::GameAction;
-use crate::loading::{MenuAssets, TextureAssets};
-use crate::GameState;
+use crate::{actions::GameAction, loading::MenuAssets, GameState};
 
 pub mod serde;
 pub mod utils;
-
-use main_menu::MainMenu;
 
 pub struct MenuPlugin;
 
@@ -51,7 +44,7 @@ pub enum WhichMenu {
 }
 
 impl WhichMenu {
-    pub fn to_view(&self, assets: &MenuAssets, menus: &Assets<Menu>) -> ViewChild {
+    pub fn to_view(&self, assets: &MenuAssets, menus: &Assets<Menu>) -> Menu {
         menus
             .get(match self {
                 Self::Main => &assets.main,
@@ -61,7 +54,6 @@ impl WhichMenu {
             })
             .expect("main menu")
             .clone()
-            .into_view_child()
     }
 }
 
@@ -107,7 +99,7 @@ fn setup_menu(
 }
 
 fn cleanup_menu(mut commands: Commands, menu: Query<Entity, With<MenuMarker>>) {
-    info!("cleanup_menu");
+    debug!("cleanup_menu");
     for entity in menu.iter() {
         commands.entity(entity).despawn();
     }

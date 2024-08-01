@@ -1,26 +1,20 @@
 Menu(
     title: "Bevy Trivia",
+    main_menu: true,
     children: [
         SubMenu((
             label: "Play",
             menu: Play,
-            variant: Some(Primary)
+            variant: Primary,
         )),
         SubMenu((
             label: "Settings",
             menu: Settings,
-            variant: None,
         )),
         SubMenu((
             label: "Credits",
             menu: Credits,
-            variant: None,
         )),
         Spacer,
-        Button((
-            label: "Quit",
-            action: Quit,
-            variant: None,
-        )),
     ],
 )

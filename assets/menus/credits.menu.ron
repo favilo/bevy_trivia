@@ -15,9 +15,5 @@ Menu(
                 icon: Some("textures/bevy.png"),
             )),
         ])),
-        Button((
-            label: "Back",
-            action: Back,
-        )),
     ],
 )
