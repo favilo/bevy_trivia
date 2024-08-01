@@ -104,5 +104,8 @@ serde = { workspace = true }
 bevy_common_assets = { workspace = true }
 bevy_embedded_assets = { workspace = true }
 
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+web-sys = { version = "0.3", features = ["Location"] }
+
 [build-dependencies]
 embed-resource = "2.4"

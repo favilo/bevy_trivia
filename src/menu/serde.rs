@@ -52,9 +52,15 @@ impl ViewTemplate for Menu {
                     .collect::<Vec<_>>(),
                 Cond::new(
                     self.main_menu,
+                    #[cfg(not(target_arch = "wasm32"))]
                     MenuItem::Button(Button {
                         label: "Quit".to_string(),
                         action: MenuAction::Quit,
+                    }),
+                    #[cfg(target_arch = "wasm32")]
+                    MenuItem::Button(Button {
+                        label: "Quit".to_string(),
+                        action: MenuAction::Reload,
                     }),
                     MenuItem::Button(Button {
                         label: "Back".to_string(),
@@ -111,6 +117,10 @@ pub enum MenuAction {
 
     /// Go back to the previous menu in the stack
     Back,
+
+    #[cfg(target_arch = "wasm32")]
+    /// Reload the game, web only
+    Reload,
 }
 
 /// A button to click
@@ -147,6 +157,11 @@ impl ViewTemplate for Button {
                             } else {
                                 next_state.set(WhichMenu::Main);
                             }
+                        }
+                        #[cfg(target_arch = "wasm32")]
+                        MenuAction::Reload => {
+                            let location = web_sys::window().unwrap().location();
+                            location.reload().unwrap();
                         }
                     }
                 },
