@@ -1,0 +1,20 @@
+Menu(
+    title: "Bevy Trivia",
+    main_menu: true,
+    children: [
+        SubMenu((
+            label: "Play",
+            menu: Play,
+            variant: Primary,
+        )),
+        SubMenu((
+            label: "Settings",
+            menu: Settings,
+        )),
+        SubMenu((
+            label: "Credits",
+            menu: Credits,
+        )),
+        Spacer,
+    ],
+)

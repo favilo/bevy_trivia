@@ -1,0 +1,19 @@
+Menu(
+    title: "Credits",
+    children: [
+        Spacer,
+        Row(([
+            Link((
+                label: "Open source",
+                url: "https://github.com/favilo/bevy_trivia",
+                icon: Some("textures/github.png"),
+            )),
+            Spacer,
+            Link((
+                label: "Made with Bevy",
+                url: "https://bevyengine.org",
+                icon: Some("textures/bevy.png"),
+            )),
+        ])),
+    ],
+)
