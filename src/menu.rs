@@ -44,7 +44,7 @@ pub enum WhichMenu {
 }
 
 impl WhichMenu {
-    pub fn to_view(&self, assets: &MenuAssets, menus: &Assets<Menu>) -> Menu {
+    pub fn to_view(self, assets: &MenuAssets, menus: &Assets<Menu>) -> Menu {
         menus
             .get(match self {
                 Self::Main => &assets.main,
@@ -116,8 +116,8 @@ fn menu_transition(transition: In<Option<StateTransitionEvent<WhichMenu>>>, worl
         return;
     }
 
-    let _ = world.run_system_once(cleanup_menu);
-    let _ = world.run_system_once(setup_menu);
+    world.run_system_once(cleanup_menu);
+    world.run_system_once(setup_menu);
 }
 
 fn move_focus(actions: Res<ActionState<GameAction>>) {
