@@ -223,6 +223,7 @@ impl ViewTemplate for Link {
         let label = self.label.clone();
         let icon = self.icon.clone();
 
+        info!("TextureAssets: {:?}", cx.use_resource::<TextureAssets>());
         QuillButton::new()
             .on_click(open_link(cx, url))
             .style(menu_button_style)

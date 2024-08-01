@@ -10,7 +10,8 @@ crate-type = ["staticlib", "cdylib"]
 
 [dependencies]
 bevy_trivia = { path = ".." }
-bevy = { version = "0.14", default-features = false }
+bevy = { workspace = true }
+bevy_embedded_assets = { workspace = true }
 
 # As long as Kira doesn't expose a feature for this, we need to enable it
 # See https://github.com/tesselode/kira/pull/51
