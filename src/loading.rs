@@ -52,6 +52,9 @@ pub struct MenuAssets {
     #[asset(path = "menus/settings.menu.ron")]
     pub settings: Handle<Menu>,
 
-    #[asset(path = "menus/play.menu.ron")]
-    pub play: Handle<Menu>,
+    #[asset(path = "menus/join.menu.ron")]
+    pub join: Handle<Menu>,
+
+    #[asset(path = "menus/host.menu.ron")]
+    pub host: Handle<Menu>,
 }

@@ -1,5 +1,5 @@
 Menu(
-    title: "Play",
+    title: "Host Game",
     children: [
         Spacer,
     ],

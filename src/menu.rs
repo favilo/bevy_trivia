@@ -38,7 +38,8 @@ pub struct MenuStack(Vec<WhichMenu>);
 pub enum WhichMenu {
     #[default]
     Main,
-    Play,
+    JoinGame,
+    HostGame,
     Settings,
     Credits,
 }
@@ -48,7 +49,8 @@ impl WhichMenu {
         menus
             .get(match self {
                 Self::Main => &assets.main,
-                Self::Play => &assets.play,
+                Self::JoinGame => &assets.join,
+                Self::HostGame => &assets.host,
                 Self::Settings => &assets.settings,
                 Self::Credits => &assets.credits,
             })
