@@ -35,7 +35,7 @@ pub struct AudioAssets {
 pub const BEVY: &str = "textures/bevy.png";
 // pub const GITHUB: &str = "textures/github.png";
 
-#[derive(AssetCollection, Resource)]
+#[derive(AssetCollection, Resource, Debug)]
 pub struct TextureAssets {
     #[asset(path = "textures", collection(typed, mapped))]
     pub images: HashMap<String, Handle<Image>>,

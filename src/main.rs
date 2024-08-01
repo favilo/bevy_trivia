@@ -6,6 +6,7 @@ use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 use bevy::winit::WinitWindows;
 use bevy::DefaultPlugins;
+use bevy_embedded_assets::{EmbeddedAssetPlugin, PluginMode};
 use bevy_trivia::GamePlugin;
 use std::io::Cursor;
 use winit::window::Icon;
@@ -14,7 +15,12 @@ fn main() {
     App::new()
         .insert_resource(Msaa::Off)
         .insert_resource(ClearColor(Color::linear_rgb(0.4, 0.4, 0.4)))
-        .add_plugins(
+        .add_plugins((
+            EmbeddedAssetPlugin {
+                mode: PluginMode::ReplaceAndFallback {
+                    path: "assets".into(),
+                },
+            },
             DefaultPlugins
                 .set(WindowPlugin {
                     primary_window: Some(Window {
@@ -32,7 +38,7 @@ fn main() {
                     meta_check: AssetMetaCheck::Never,
                     ..default()
                 }),
-        )
+        ))
         .add_plugins(GamePlugin)
         .add_systems(Startup, set_window_icon)
         .run();
