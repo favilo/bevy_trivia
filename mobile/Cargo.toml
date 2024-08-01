@@ -10,7 +10,7 @@ crate-type = ["staticlib", "cdylib"]
 
 [dependencies]
 bevy_trivia = { path = ".." }
-bevy = { workspace = true }
+bevy = { workspace = true, default-features = false }
 bevy_embedded_assets = { workspace = true }
 
 # As long as Kira doesn't expose a feature for this, we need to enable it
