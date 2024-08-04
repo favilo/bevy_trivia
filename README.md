@@ -7,9 +7,9 @@ A Multiplayer Trivia Game written in Rust using the Bevy Engine
 
 Based on the [Bevy Game Template](https://github.com/NiklasEi/bevy_game_template) by [Niklas Eicker](https://github.com/NiklasEi).
 
-Questions sourced from the [Open Trivia Database](https://opentdb.com/)]
+Questions sourced from the [Open Trivia Database](https://opentdb.com/)
 
-Networking is done using the [Lightyear](https://github.com/cBournhonesque/lightyear)] Networking crate.
+Networking is done using the [Lightyear](https://github.com/cBournhonesque/lightyear) Networking crate.
 
 # How to use this template?
 
