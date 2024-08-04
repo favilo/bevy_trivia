@@ -281,10 +281,8 @@ impl ViewTemplate for TextInput {
                                         if **cursor_pos > 0 {
                                             **cursor_pos -= 1;
                                         }
-                                    } else {
-                                        if **cursor_pos < value.len() {
-                                            **cursor_pos += 1;
-                                        }
+                                    } else if **cursor_pos < value.len() {
+                                        **cursor_pos += 1;
                                     }
                                     cursor_timer.should_reset = true;
                                 }
