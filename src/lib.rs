@@ -22,7 +22,7 @@ use bevy::diagnostic::{
 use bevy::prelude::*;
 use bevy_mod_picking::DefaultPickingPlugins;
 use bevy_quill::QuillPlugin;
-use bevy_quill_obsidian::ObsidianUiPlugin;
+use bevy_quill_obsidian::{colors, ObsidianUiPlugin};
 
 // This example game uses States to separate logic
 // See https://github.com/bevyengine/bevy/blob/main/examples/ecs/state.rs
@@ -52,6 +52,7 @@ impl Plugin for GamePlugin {
                 InternalAudioPlugin,
                 PlayerPlugin,
             ))
+            .insert_resource(ClearColor(colors::BACKGROUND.into()))
             .add_systems(OnEnter(GameState::Menu), setup_camera);
 
         #[cfg(debug_assertions)]

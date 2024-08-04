@@ -57,4 +57,7 @@ pub struct MenuAssets {
 
     #[asset(path = "menus/host.menu.ron")]
     pub host: Handle<Menu>,
+
+    #[asset(path = "fonts/Cursor.ttf")]
+    pub cursor_font: Handle<Font>,
 }

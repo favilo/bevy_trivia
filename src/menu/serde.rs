@@ -1,9 +1,10 @@
-use bevy::{asset::Asset, prelude::*, reflect::TypePath};
+use bevy::{a11y::Focus, asset::Asset, prelude::*, reflect::TypePath};
 use bevy_mod_stylebuilder::{StyleBuilder, StyleBuilderFont, StyleBuilderLayout};
 use bevy_quill::*;
 use bevy_quill_obsidian::{
     colors,
     controls::{Button as QuillButton, ButtonVariant, Icon, Spacer},
+    focus::{AutoFocus, TabGroup},
     size::Size,
     typography,
 };
@@ -12,8 +13,9 @@ use serde::{Deserialize, Serialize};
 use crate::loading::TextureAssets;
 
 use super::{
-    menu_button_style, menu_row_style, menu_style,
+    menu_button_style, menu_labeled_style, menu_row_style, menu_style, menu_text_input_style,
     utils::{is_false, open_link},
+    widgets::text_input::TextInput as QuillTextInput,
     MenuStack, WhichMenu,
 };
 
@@ -34,14 +36,17 @@ pub struct Menu {
 impl ViewTemplate for Menu {
     type View = impl View;
 
-    fn create(&self, _cx: &mut bevy_quill::Cx) -> Self::View {
-        Element::<NodeBundle>::new()
+    fn create(&self, cx: &mut bevy_quill::Cx) -> Self::View {
+        let id = cx.create_entity();
+        cx.world_mut().get_resource_mut::<Focus>().unwrap().0 = Some(id);
+        Element::<NodeBundle>::for_entity(id)
             .named(&self.title)
             .style(menu_style)
+            .insert_dyn(move |_| (TabGroup::default(), AutoFocus), ())
             .children((
                 Element::<NodeBundle>::new()
-                    .style((typography::text_default, move |ss: &mut StyleBuilder| {
-                        ss.min_height(Val::Px(150.0))
+                    .style((typography::text_strong, move |ss: &mut StyleBuilder| {
+                        ss.min_height(Val::Px(70.0))
                             .font_size(48.0)
                             .color(colors::PRIMARY);
                     }))
@@ -89,6 +94,9 @@ pub enum MenuItem {
     /// A link to open in a browser
     Link(Link),
 
+    /// A text input to enter text
+    TextInput(TextInput),
+
     /// A row of several items
     Row(Row),
 }
@@ -104,6 +112,7 @@ impl ViewTemplate for MenuItem {
             MenuItem::SubMenu(sub_menu) => sub_menu.into_view_child(),
             MenuItem::Button(button) => button.into_view_child(),
             MenuItem::Link(link) => link.into_view_child(),
+            MenuItem::TextInput(text_input) => text_input.into_view_child(),
             MenuItem::Row(row) => row.into_view_child(),
         }
     }
@@ -313,6 +322,39 @@ impl ViewTemplate for SubMenu {
             .size(Size::Xl)
             .children(self.label.clone())
             .variant(self.variant.into())
+    }
+}
+
+#[derive(Serialize, Deserialize, TypePath, Clone, Debug, PartialEq)]
+pub struct TextInput {
+    /// The label to display
+    label: String,
+
+    /// The default value of the text input
+    #[serde(skip_serializing_if = "String::is_empty", default)]
+    default_value: String,
+
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    max_length: Option<usize>,
+}
+
+impl ViewTemplate for TextInput {
+    type View = impl View;
+
+    fn create(&self, _cx: &mut bevy_quill::Cx) -> Self::View {
+        let label = self.label.clone();
+        let default_value = self.default_value.clone();
+
+        Element::<NodeBundle>::new()
+            .style((menu_labeled_style, typography::text_strong))
+            .children((
+                label,
+                QuillTextInput::new()
+                    .default_value(default_value)
+                    .max_length(self.max_length)
+                    .style(menu_text_input_style)
+                    .size(Size::Xl),
+            ))
     }
 }
 

@@ -1,6 +1,11 @@
 Menu(
     title: "Host Game",
     children: [
+        TextInput((
+            label: "Game Name",
+            default_value: "My Game",
+            max_length: Some(30),
+        )),
         Spacer,
     ],
 )
