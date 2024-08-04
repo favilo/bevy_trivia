@@ -1,11 +1,14 @@
 android:
   gradle: true
   # this assets configuration is currently only used without gradle!
-  #assets:
-  #  - "../assets/*"
+  assets:
+   - "../assets/*"
   icon: "ios-src/Assets.xcassets/AppIcon.appiconset/icon_1024x1024.png"
   manifest:
     package: "org.favil.bevytrivia"
     version_code: 1
+    sdk:
+      target_sdk_version: 33
     application:
       label: "Bevy Trivia" 
+      theme: "@android:style/Theme.NoTitleBar.Fullscreen"

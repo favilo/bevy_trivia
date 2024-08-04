@@ -12,6 +12,8 @@ crate-type = ["staticlib", "cdylib"]
 bevy_trivia = { path = ".." }
 bevy = { workspace = true, default-features = false }
 bevy_embedded_assets = { workspace = true }
+jni = "0.21.0"
+ndk-context = "0.1.1"
 
 # As long as Kira doesn't expose a feature for this, we need to enable it
 # See https://github.com/tesselode/kira/pull/51

@@ -2872,6 +2872,8 @@ dependencies = [
  "bevy_embedded_assets",
  "bevy_trivia",
  "cpal",
+ "jni",
+ "ndk-context",
 ]
 
 [[package]]

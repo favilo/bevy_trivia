@@ -4,7 +4,7 @@
 mod actions;
 mod audio;
 mod loading;
-mod menu;
+pub mod menu;
 mod player;
 
 use crate::actions::ActionsPlugin;

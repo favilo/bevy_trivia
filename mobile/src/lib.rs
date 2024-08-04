@@ -2,6 +2,9 @@ use bevy::prelude::*;
 use bevy::window::WindowMode;
 use bevy_embedded_assets::{EmbeddedAssetPlugin, PluginMode};
 use bevy_trivia::GamePlugin;
+use keyboard::AndroidKeyboardPlugin;
+
+mod keyboard;
 
 #[bevy_main]
 fn main() {
@@ -21,6 +24,7 @@ fn main() {
                 ..default()
             }),
             GamePlugin,
+            AndroidKeyboardPlugin
         ))
         .run();
 }
