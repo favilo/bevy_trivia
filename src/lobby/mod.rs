@@ -20,26 +20,34 @@ impl Plugin for LobbyPlugin {
             .init_resource::<QuestionDifficulty>()
             .init_resource::<NumQuestions>()
             .init_resource::<QuestionTypes>()
-            .init_resource::<GameName>();
+            .init_resource::<GameName>()
+            .register_type::<QuestionDifficulty>()
+            .register_type::<NumQuestions>()
+            .register_type::<QuestionTypes>()
+            .register_type::<GameName>();
     }
 }
 
 #[derive(Resource, Deref, DerefMut, Clone, Debug)]
 pub struct HostLobby(pub SystemId);
 
-#[derive(Default, Resource, Deref, DerefMut, Clone, Debug)]
+#[derive(Default, Deref, DerefMut, Clone, Debug, Resource, Reflect)]
+#[reflect(Resource)]
 pub struct GameName(String);
 
 // TODO: Add integer parsing and validation to TextInput
-#[derive(Default, Deref, DerefMut, Clone, Debug, Resource)]
+#[derive(Default, Deref, DerefMut, Clone, Debug, Resource, Reflect)]
+#[reflect(Resource)]
 pub struct NumQuestions(usize);
 
 // TODO: Make this a set of Enums
-#[derive(Default, Deref, DerefMut, Clone, Debug, Resource)]
+#[derive(Default, Deref, DerefMut, Clone, Debug, Resource, Reflect)]
+#[reflect(Resource)]
 pub struct QuestionTypes(Vec<String>);
 
 // TODO: Make this a set of Enums
-#[derive(Default, Deref, DerefMut, Clone, Debug, Resource)]
+#[derive(Default, Deref, DerefMut, Clone, Debug, Resource, Reflect)]
+#[reflect(Resource)]
 pub struct QuestionDifficulty(Vec<String>);
 
 #[derive(SystemParam)]

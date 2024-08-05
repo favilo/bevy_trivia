@@ -110,6 +110,8 @@ bevy_quill_obsidian = { workspace = true }
 serde = { workspace = true }
 bevy_common_assets = { workspace = true }
 bevy_embedded_assets = { workspace = true }
+bevy-inspector-egui = "0.25.1"
+bevy_egui = "0.28.0"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 web-sys = { version = "0.3", features = ["Location"] }

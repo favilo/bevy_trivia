@@ -1,4 +1,5 @@
 use bevy::{a11y::Focus, prelude::*};
+use bevy_mod_picking::prelude::{Listener, On};
 use bevy_mod_stylebuilder::{StyleBuilder, StyleBuilderFont, StyleBuilderLayout};
 use bevy_quill::*;
 use bevy_quill_obsidian::{
@@ -7,13 +8,15 @@ use bevy_quill_obsidian::{
         Button as QuillButton, ButtonVariant, Icon, MenuButton, MenuItem as QuillMenuItem,
         MenuPopup, Spacer,
     },
-    focus::{AutoFocus, TabGroup},
+    focus::{AutoFocus, DefaultKeyListener, KeyPressEvent, TabGroup},
     size::Size,
     typography,
 };
 use serde::{Deserialize, Serialize};
 
-use crate::{loading::TextureAssets, lobby::HostLobby, trivia::source::TriviaSource};
+use crate::{
+    loading::TextureAssets, lobby::HostLobby, trivia::source::TriviaSource, ShowInspectorUi,
+};
 
 use super::{
     menu_button_style, menu_labeled_style, menu_row_style, menu_style, menu_text_input_style,
@@ -49,6 +52,16 @@ impl ViewTemplate for Menu {
             .named(&self.title)
             .style(menu_style)
             .insert_dyn(move |_| (TabGroup::default(), AutoFocus), ())
+            .insert_if(cfg!(debug_assertions), || DefaultKeyListener)
+            .insert_if(cfg!(debug_assertions), move || {
+                On::<KeyPressEvent>::run(
+                    move |event: Listener<KeyPressEvent>, mut show: ResMut<ShowInspectorUi>| {
+                        if event.key_code == KeyCode::F12 {
+                            show.0 = !show.0;
+                        };
+                    },
+                )
+            })
             .children((
                 Element::<NodeBundle>::new()
                     .style((typography::text_strong, move |ss: &mut StyleBuilder| {

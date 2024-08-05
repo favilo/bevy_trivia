@@ -14,16 +14,20 @@ use crate::{
     menu::MenuPlugin, player::PlayerPlugin,
 };
 
-use bevy::app::App;
 #[cfg(debug_assertions)]
 use bevy::diagnostic::{
     // FrameTimeDiagnosticsPlugin,
     LogDiagnosticsPlugin,
 };
 use bevy::prelude::*;
+use bevy::{app::App, window::PrimaryWindow};
+use bevy_egui::{egui, EguiContext, EguiPlugin};
+use bevy_mod_picking::prelude::{Listener, On};
 use bevy_mod_picking::DefaultPickingPlugins;
-use bevy_quill::QuillPlugin;
+use bevy_quill::{Element, QuillPlugin, View};
+use bevy_quill_obsidian::focus::{DefaultKeyListener, KeyPressEvent};
 use bevy_quill_obsidian::{colors, ObsidianUiPlugin};
+use lobby::{GameName, NumQuestions, QuestionDifficulty, QuestionTypes};
 
 // This example game uses States to separate logic
 // See https://github.com/bevyengine/bevy/blob/main/examples/ecs/state.rs
@@ -60,18 +64,93 @@ impl Plugin for GamePlugin {
                 LobbyPlugin,
             ))
             .insert_resource(ClearColor(colors::BACKGROUND.into()))
-            .add_systems(OnEnter(GameState::Menu), setup_camera);
+            .insert_resource(ShowInspectorUi(false))
+            .add_systems(Startup, setup_camera);
 
         #[cfg(debug_assertions)]
         {
             app.add_plugins((
                 //FrameTimeDiagnosticsPlugin,
                 LogDiagnosticsPlugin::default(),
-            ));
+                EguiPlugin,
+                bevy_inspector_egui::DefaultInspectorConfigPlugin,
+            ))
+            .add_systems(Update, inspector_ui)
+            .add_systems(Startup, setup_inspector);
         }
     }
 }
 
 fn setup_camera(mut commands: Commands) {
     commands.spawn(Camera2dBundle::default());
+}
+
+fn setup_inspector(mut commands: Commands) {
+    commands.spawn(
+        Element::<NodeBundle>::new()
+            .insert_dyn(
+                |_| {
+                    (
+                        DefaultKeyListener,
+                        On::<KeyPressEvent>::run(
+                            move |event: Listener<KeyPressEvent>,
+                                  mut show: ResMut<ShowInspectorUi>| {
+                                info!("KeyPressEvent: {:?}", event.key_code);
+                                if event.key_code == KeyCode::Backquote {
+                                    show.0 = !show.0;
+                                }
+                            },
+                        ),
+                    )
+                },
+                (),
+            )
+            .to_root(),
+    );
+}
+
+macro_rules! ui_for_resource {
+    ($resource:ty, $world:expr, $ui:expr) => {
+        $ui.collapsing(stringify!($resource), |ui| {
+            bevy_inspector_egui::bevy_inspector::ui_for_resource::<$resource>($world, ui)
+        });
+    };
+}
+
+#[derive(Resource)]
+struct ShowInspectorUi(bool);
+
+fn inspector_ui(world: &mut World) {
+    let show_inspector_ui = world.resource::<ShowInspectorUi>().0;
+    if !show_inspector_ui {
+        return;
+    }
+
+    let Ok(egui_context) = world
+        .query_filtered::<&mut EguiContext, With<PrimaryWindow>>()
+        .get_single(world)
+    else {
+        return;
+    };
+
+    let mut egui_context = egui_context.clone();
+
+    egui::Window::new("UI").show(egui_context.get_mut(), |ui| {
+        egui::ScrollArea::vertical().show(ui, |ui| {
+            // equivalent to `WorldInspectorPlugin`
+            // bevy_inspector_egui::bevy_inspector::ui_for_world(world, ui);
+
+            egui::CollapsingHeader::new("Resources")
+                .default_open(true)
+                .show(ui, |ui| {
+                    ui_for_resource!(GameName, world, ui);
+                    ui_for_resource!(NumQuestions, world, ui);
+                    ui_for_resource!(QuestionDifficulty, world, ui);
+                    ui_for_resource!(QuestionTypes, world, ui);
+                });
+
+            // ui.heading("Entities");
+            // bevy_inspector_egui::bevy_inspector::ui_for_world_entities(world, ui);
+        });
+    });
 }

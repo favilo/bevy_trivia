@@ -241,28 +241,32 @@ impl ViewTemplate for TextInput {
                             if world.is_disabled(id) {
                                 return;
                             }
-                            let mut event = world
-                                .get_resource_mut::<ListenerInput<KeyPressEvent>>()
-                                .unwrap();
+                            let mut state = SystemState::<(
+                                ResMut<ListenerInput<KeyPressEvent>>,
+                                Query<(
+                                    &mut TextInputValue,
+                                    &mut TextInputCursorPos,
+                                    &mut TextInputCursorTimer,
+                                )>,
+                                ResMut<Focus>,
+                                ResMut<FocusVisible>,
+                                TabNavigation,
+                            )>::new(world);
+                            let (mut event, mut qs, mut focus, mut focus_visible, nav) =
+                                state.get_mut(world);
                             if event.target != id {
                                 return;
                             }
-                            event.stop_propagation();
                             let key_code = event.key_code;
                             let shift = event.shift;
-                            let mut qs = world.query::<(
-                                &mut TextInputValue,
-                                &mut TextInputCursorPos,
-                                &mut TextInputCursorTimer,
-                            )>();
                             let (mut value, mut cursor_pos, mut cursor_timer) = qs
-                                .get_mut(world, id)
+                                .get_mut(id)
                                 .expect("this entity should have provided components entity");
+                            let mut run_callback = false;
                             match key_code {
                                 KeyCode::Enter => {
-                                    if let Some(on_submit) = on_submit {
-                                        world.run_callback(on_submit, ());
-                                    }
+                                    run_callback = true;
+                                    event.stop_propagation();
                                 }
                                 code @ (KeyCode::ArrowLeft | KeyCode::ArrowRight) => {
                                     if code == KeyCode::ArrowLeft {
@@ -273,23 +277,19 @@ impl ViewTemplate for TextInput {
                                         **cursor_pos += 1;
                                     }
                                     cursor_timer.should_reset = true;
+                                    event.stop_propagation();
                                 }
                                 KeyCode::Home => {
                                     **cursor_pos = 0;
                                     cursor_timer.should_reset = true;
+                                    event.stop_propagation();
                                 }
                                 KeyCode::End => {
                                     **cursor_pos = value.len();
                                     cursor_timer.should_reset = true;
+                                    event.stop_propagation();
                                 }
                                 code @ (KeyCode::ArrowUp | KeyCode::ArrowDown | KeyCode::Tab) => {
-                                    let mut st: SystemState<(
-                                        ResMut<Focus>,
-                                        ResMut<FocusVisible>,
-                                        TabNavigation,
-                                    )> = SystemState::new(world);
-
-                                    let (mut focus, mut visible, nav) = st.get_mut(world);
                                     let next = nav.navigate(
                                         Some(id),
                                         if code == KeyCode::ArrowDown
@@ -302,8 +302,9 @@ impl ViewTemplate for TextInput {
                                     );
                                     if next.is_some() {
                                         focus.0 = next;
-                                        visible.0 = true;
+                                        focus_visible.0 = true;
                                     }
+                                    event.stop_propagation();
                                 }
                                 KeyCode::Backspace => {
                                     if **cursor_pos > 0 {
@@ -311,12 +312,14 @@ impl ViewTemplate for TextInput {
                                         **cursor_pos -= 1;
                                         cursor_timer.should_reset = true;
                                     }
+                                    event.stop_propagation();
                                 }
                                 KeyCode::Delete => {
                                     if **cursor_pos < (**value).len() {
                                         value.remove(**cursor_pos);
                                         cursor_timer.should_reset = true;
                                     }
+                                    event.stop_propagation();
                                 }
                                 KeyCode::Space => {
                                     if max_length.map_or(true, |l| value.len() < l) {
@@ -324,8 +327,12 @@ impl ViewTemplate for TextInput {
                                         **cursor_pos += 1;
                                         cursor_timer.should_reset = true;
                                     }
+                                    event.stop_propagation();
                                 }
                                 _ => {}
+                            }
+                            if run_callback && on_submit.is_some() {
+                                world.run_callback(on_submit.unwrap(), ());
                             }
                         }),
                         On::<KeyCharEvent>::run(move |world: &mut World| {
