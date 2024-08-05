@@ -30,24 +30,7 @@ use bevy_quill_obsidian::{
 
 use crate::loading::MenuAssets;
 
-trait UseComponentOrDefault {
-    fn use_component_or_default<T: Component + Default>(&mut self, target: Entity) -> &T;
-    fn use_component_or<T: Component>(&mut self, target: Entity, default: T) -> &T;
-}
-
-impl<'p, 'w> UseComponentOrDefault for Cx<'p, 'w> {
-    fn use_component_or_default<C: Component + Default>(&mut self, target: Entity) -> &C {
-        self.use_component_or(target, C::default())
-    }
-
-    fn use_component_or<C: Component>(&mut self, target: Entity, default: C) -> &C {
-        let mut ent = self.world_mut().entity_mut(target);
-        if !ent.contains::<C>() {
-            ent.insert(default);
-        }
-        self.use_component::<C>(target).unwrap()
-    }
-}
+use super::UseComponentOrDefault;
 
 #[derive(Component, Debug, Default, Clone, Deref, DerefMut, PartialEq, Eq, Reflect)]
 pub struct TextInputValue(String);
@@ -87,6 +70,7 @@ pub struct TextInput {
     pub minimal: bool,
     pub on_submit: Option<Callback>,
     pub max_length: Option<usize>,
+    pub name: String,
 }
 
 impl TextInput {
@@ -141,6 +125,11 @@ impl TextInput {
 
     pub fn max_length(mut self, max_length: Option<usize>) -> Self {
         self.max_length = max_length;
+        self
+    }
+
+    pub(crate) fn named(mut self, name: &str) -> Self {
+        self.name = name.to_string();
         self
     }
 }
@@ -213,7 +202,6 @@ impl ViewTemplate for TextInput {
         let on_submit = self.on_submit;
 
         Element::<NodeBundle>::for_entity(id)
-            .named("TextInput")
             .style((
                 typography::text_default,
                 style_text_input,
@@ -227,6 +215,7 @@ impl ViewTemplate for TextInput {
                 },
                 self.style.clone(),
             ))
+            .insert_dyn(Name::new, self.name.clone())
             .insert_dyn(TabIndex, self.tab_index)
             .insert_if(self.disabled, || Disabled)
             .insert_if(self.auto_focus, || AutoFocus)
@@ -234,7 +223,6 @@ impl ViewTemplate for TextInput {
                 move |_| {
                     (
                         AccessibilityNode::from(NodeBuilder::new(Role::TextInput)),
-                        // TODO: On::<Events>
                         On::<Pointer<Click>>::run(move |world: &mut World| {
                             let mut focus = world.get_resource_mut::<Focus>().unwrap();
                             focus.0 = Some(id);
@@ -352,6 +340,11 @@ impl ViewTemplate for TextInput {
                             }
                             event.stop_propagation();
                             let key = event.key;
+                            // Just a single line, ignore newline characters, especially because we
+                            // should have already on_submit callback
+                            if key == '\n' {
+                                return;
+                            }
                             let mut qs = world.query::<(
                                 &mut TextInputValue,
                                 &mut TextInputCursorPos,

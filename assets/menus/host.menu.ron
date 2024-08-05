@@ -5,7 +5,31 @@ Menu(
             label: "Game Name",
             default_value: "My Game",
             max_length: Some(30),
+            name: "game_name",
+        )),
+        MultiDropdown((
+            label: "Difficulty",
+            options: String((["Easy", "Medium", "Hard"])),
+            selected: [0, 1, 2],
+            name: "difficulty",
+        )),
+        MultiDropdown((
+            label: "Allowed Question Types",
+            options: String((["Multiple Choice", "True/False"])),
+            selected: [0, 1],
+            name: "question_types",
+        )),
+        // Spacer,
+        TextInput((
+            label: "Number of Questions",
+            default_value: "10",
+            max_length: Some(3),
+            name: "num_questions",
         )),
         Spacer,
+        Button((
+            label: "Open Lobby",
+            action: HostLobby,
+        ))
     ],
 )

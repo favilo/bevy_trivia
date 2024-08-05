@@ -3,10 +3,9 @@ use bevy::{ecs::system::RunSystemOnce, prelude::*, ui};
 use bevy_mod_stylebuilder::{StyleBuilder, StyleBuilderFont, StyleBuilderLayout};
 use bevy_quill::View;
 use bevy_quill_obsidian::colors;
-use leafwing_input_manager::action_state::ActionState;
 use serde::Menu;
 
-use crate::{actions::GameAction, loading::MenuAssets, GameState};
+use crate::{loading::MenuAssets, GameState};
 
 pub mod serde;
 pub mod utils;
@@ -26,7 +25,7 @@ impl Plugin for MenuPlugin {
                     .pipe(menu_transition)
                     .run_if(in_state(GameState::Menu)),
             )
-            .add_systems(Update, move_focus.run_if(in_state(GameState::Menu)));
+            .add_systems(OnExit(GameState::Menu), cleanup_menu);
     }
 }
 
@@ -139,8 +138,4 @@ fn menu_transition(transition: In<Option<StateTransitionEvent<WhichMenu>>>, worl
 
     world.run_system_once(cleanup_menu);
     world.run_system_once(setup_menu);
-}
-
-fn move_focus(actions: Res<ActionState<GameAction>>) {
-    if actions.just_pressed(&GameAction::Move) {}
 }

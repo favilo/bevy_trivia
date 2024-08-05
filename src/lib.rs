@@ -3,15 +3,16 @@
 
 mod actions;
 mod audio;
-mod loading;
+pub mod loading;
+mod lobby;
 pub mod menu;
 mod player;
+mod trivia;
 
-use crate::actions::ActionsPlugin;
-use crate::audio::InternalAudioPlugin;
-use crate::loading::LoadingPlugin;
-use crate::menu::MenuPlugin;
-use crate::player::PlayerPlugin;
+use crate::{
+    actions::ActionsPlugin, audio::InternalAudioPlugin, loading::LoadingPlugin, lobby::LobbyPlugin,
+    menu::MenuPlugin, player::PlayerPlugin,
+};
 
 use bevy::app::App;
 #[cfg(debug_assertions)]
@@ -31,10 +32,15 @@ pub enum GameState {
     // During the loading State the LoadingPlugin will load our assets
     #[default]
     Loading,
+
     // During this State the actual game logic is executed
     Playing,
+
     // Here the menu is drawn and waiting for player interaction
     Menu,
+
+    // The lobby is waiting for players to join
+    Lobby,
 }
 
 pub struct GamePlugin;
@@ -51,6 +57,7 @@ impl Plugin for GamePlugin {
                 ActionsPlugin,
                 InternalAudioPlugin,
                 PlayerPlugin,
+                LobbyPlugin,
             ))
             .insert_resource(ClearColor(colors::BACKGROUND.into()))
             .add_systems(OnEnter(GameState::Menu), setup_camera);

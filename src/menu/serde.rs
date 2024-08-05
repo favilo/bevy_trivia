@@ -1,21 +1,27 @@
-use bevy::{a11y::Focus, asset::Asset, prelude::*, reflect::TypePath};
+use bevy::{a11y::Focus, prelude::*};
 use bevy_mod_stylebuilder::{StyleBuilder, StyleBuilderFont, StyleBuilderLayout};
 use bevy_quill::*;
 use bevy_quill_obsidian::{
     colors,
-    controls::{Button as QuillButton, ButtonVariant, Icon, Spacer},
+    controls::{
+        Button as QuillButton, ButtonVariant, Icon, MenuButton, MenuItem as QuillMenuItem,
+        MenuPopup, Spacer,
+    },
     focus::{AutoFocus, TabGroup},
     size::Size,
     typography,
 };
 use serde::{Deserialize, Serialize};
 
-use crate::loading::TextureAssets;
+use crate::{loading::TextureAssets, lobby::HostLobby, trivia::source::TriviaSource};
 
 use super::{
     menu_button_style, menu_labeled_style, menu_row_style, menu_style, menu_text_input_style,
     utils::{is_false, open_link},
-    widgets::text_input::TextInput as QuillTextInput,
+    widgets::{
+        multi_dropdown::MultiDropdown as QuillMultiDropdown,
+        text_input::TextInput as QuillTextInput,
+    },
     MenuStack, WhichMenu,
 };
 
@@ -99,6 +105,12 @@ pub enum MenuItem {
 
     /// A row of several items
     Row(Row),
+
+    /// A dropdown to select an option
+    Dropdown(Dropdown),
+
+    /// A multi-dropdown to select multiple options
+    MultiDropdown(MultiDropdown),
 }
 
 impl ViewTemplate for MenuItem {
@@ -114,6 +126,8 @@ impl ViewTemplate for MenuItem {
             MenuItem::Link(link) => link.into_view_child(),
             MenuItem::TextInput(text_input) => text_input.into_view_child(),
             MenuItem::Row(row) => row.into_view_child(),
+            MenuItem::Dropdown(dropdown) => dropdown.into_view_child(),
+            MenuItem::MultiDropdown(multi_dropdown) => multi_dropdown.into_view_child(),
         }
     }
 }
@@ -130,6 +144,9 @@ pub enum MenuAction {
     #[cfg(target_arch = "wasm32")]
     /// Reload the game, web only
     Reload,
+
+    /// Open the Lobby from the [`WhichMenu::HostGame`] Menu
+    HostLobby,
 }
 
 /// A button to click
@@ -152,9 +169,11 @@ impl ViewTemplate for Button {
 
         QuillButton::new()
             .on_click(cx.create_callback(
-                move |mut next_state: ResMut<NextState<WhichMenu>>,
+                move |mut commands: Commands,
+                      mut next_state: ResMut<NextState<WhichMenu>>,
                       mut menu_stack: ResMut<MenuStack>,
-                      mut app_exit: EventWriter<AppExit>| {
+                      mut app_exit: EventWriter<AppExit>,
+                      start_host_lobby: Res<HostLobby>| {
                     debug!("Menu Stack: {:?}", menu_stack);
                     match action {
                         MenuAction::Quit => {
@@ -171,6 +190,9 @@ impl ViewTemplate for Button {
                         MenuAction::Reload => {
                             let location = web_sys::window().unwrap().location();
                             location.reload().unwrap();
+                        }
+                        MenuAction::HostLobby => {
+                            commands.run_system(**start_host_lobby);
                         }
                     }
                 },
@@ -334,8 +356,12 @@ pub struct TextInput {
     #[serde(skip_serializing_if = "String::is_empty", default)]
     default_value: String,
 
+    /// The maximum length of the text input
     #[serde(skip_serializing_if = "Option::is_none", default)]
     max_length: Option<usize>,
+
+    /// The name of the text input, for fetching the value from components
+    name: String,
 }
 
 impl ViewTemplate for TextInput {
@@ -350,6 +376,7 @@ impl ViewTemplate for TextInput {
             .children((
                 label,
                 QuillTextInput::new()
+                    .named(&self.name)
                     .default_value(default_value)
                     .max_length(self.max_length)
                     .style(menu_text_input_style)
@@ -372,5 +399,64 @@ impl ViewTemplate for Row {
                 .map(|item| item.clone().into_view_child())
                 .collect::<Vec<_>>(),
         )
+    }
+}
+
+#[derive(Serialize, Deserialize, TypePath, Clone, Debug, PartialEq)]
+pub struct Dropdown {
+    label: String,
+    source: TriviaSource,
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    selected: Option<usize>,
+}
+
+impl ViewTemplate for Dropdown {
+    type View = impl View;
+
+    fn create(&self, _cx: &mut bevy_quill::Cx) -> Self::View {
+        let label = self.label.clone();
+        let source = self.source.clone();
+
+        Element::<NodeBundle>::new()
+            .style((menu_labeled_style, typography::text_strong))
+            .children(
+                MenuButton::new().children(label).popup(
+                    MenuPopup::new().children(
+                        source
+                            .iter()
+                            .map(|s| QuillMenuItem::new().label(s).into_view_child())
+                            .collect::<Vec<_>>(),
+                    ),
+                ),
+            )
+    }
+}
+
+#[derive(Serialize, Deserialize, TypePath, Clone, Debug, PartialEq)]
+pub struct MultiDropdown {
+    /// The label to display
+    label: String,
+    /// The options to choose from
+    options: TriviaSource,
+    /// The selected options
+    selected: Vec<usize>,
+    /// The name of the dropdown, for fetching the value from components
+    name: String,
+}
+
+impl ViewTemplate for MultiDropdown {
+    type View = impl View;
+
+    fn create(&self, _cx: &mut bevy_quill::Cx) -> Self::View {
+        let label = self.label.clone();
+        let options = self.options.clone();
+        let selected = &self.selected;
+
+        QuillMultiDropdown::new()
+            .label(label)
+            .source(options)
+            .selected(selected)
+            .named(&self.name)
+            .into_view_child()
     }
 }

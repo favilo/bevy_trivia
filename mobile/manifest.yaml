@@ -12,3 +12,6 @@ android:
     application:
       label: "Bevy Trivia" 
       theme: "@android:style/Theme.NoTitleBar.Fullscreen"
+      activities: 
+        - window_soft_input_mode: "adjustResize"
+          hardware_accelerated: true
