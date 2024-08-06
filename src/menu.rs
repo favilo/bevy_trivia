@@ -1,14 +1,15 @@
 use ::serde::{Deserialize, Serialize};
 use bevy::{ecs::system::RunSystemOnce, prelude::*, ui};
-use bevy_mod_stylebuilder::{StyleBuilder, StyleBuilderLayout};
+use bevy_mod_stylebuilder::{StyleBuilder, StyleBuilderFont, StyleBuilderLayout};
 use bevy_quill::View;
-use leafwing_input_manager::action_state::ActionState;
+use bevy_quill_obsidian::colors;
 use serde::Menu;
 
-use crate::{actions::GameAction, loading::MenuAssets, GameState};
+use crate::{loading::MenuAssets, GameState};
 
 pub mod serde;
 pub mod utils;
+pub mod widgets;
 
 pub struct MenuPlugin;
 
@@ -24,7 +25,7 @@ impl Plugin for MenuPlugin {
                     .pipe(menu_transition)
                     .run_if(in_state(GameState::Menu)),
             )
-            .add_systems(Update, move_focus.run_if(in_state(GameState::Menu)));
+            .add_systems(OnExit(GameState::Menu), cleanup_menu);
     }
 }
 
@@ -38,7 +39,8 @@ pub struct MenuStack(Vec<WhichMenu>);
 pub enum WhichMenu {
     #[default]
     Main,
-    Play,
+    JoinGame,
+    HostGame,
     Settings,
     Credits,
 }
@@ -48,7 +50,8 @@ impl WhichMenu {
         menus
             .get(match self {
                 Self::Main => &assets.main,
-                Self::Play => &assets.play,
+                Self::JoinGame => &assets.join,
+                Self::HostGame => &assets.host,
                 Self::Settings => &assets.settings,
                 Self::Credits => &assets.credits,
             })
@@ -75,18 +78,35 @@ fn menu_style(ss: &mut StyleBuilder) {
 
 fn menu_row_style(ss: &mut StyleBuilder) {
     ss.display(Display::Flex)
-        .width(Val::Percent(75.0))
         .flex_direction(FlexDirection::Row)
+        .width(Val::Percent(75.0))
         .align_items(AlignItems::Center)
         .column_gap(10);
 }
 
 fn menu_button_style(ss: &mut StyleBuilder) {
     ss.display(Display::Flex)
-        .width(Val::Percent(75.0))
         .flex_direction(FlexDirection::Row)
+        .width(Val::Percent(75.0))
         .align_items(AlignItems::Center)
         .column_gap(10);
+}
+
+fn menu_text_input_style(ss: &mut StyleBuilder) {
+    ss.display(Display::Flex)
+        .flex_direction(FlexDirection::Row)
+        .width(Val::Percent(100.0))
+        .align_items(AlignItems::Center)
+        .column_gap(10);
+}
+
+fn menu_labeled_style(ss: &mut StyleBuilder) {
+    ss.display(Display::Flex)
+        .flex_direction(FlexDirection::Column)
+        .width(Val::Percent(75.0))
+        .align_items(AlignItems::Start)
+        .row_gap(2.5)
+        .color(colors::FOREGROUND);
 }
 
 fn setup_menu(
@@ -118,8 +138,4 @@ fn menu_transition(transition: In<Option<StateTransitionEvent<WhichMenu>>>, worl
 
     world.run_system_once(cleanup_menu);
     world.run_system_once(setup_menu);
-}
-
-fn move_focus(actions: Res<ActionState<GameAction>>) {
-    if actions.just_pressed(&GameAction::Move) {}
 }

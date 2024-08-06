@@ -1,19 +1,31 @@
-use bevy::{asset::Asset, prelude::*, reflect::TypePath};
+use bevy::{a11y::Focus, prelude::*};
+use bevy_mod_picking::prelude::{Listener, On};
 use bevy_mod_stylebuilder::{StyleBuilder, StyleBuilderFont, StyleBuilderLayout};
 use bevy_quill::*;
 use bevy_quill_obsidian::{
     colors,
-    controls::{Button as QuillButton, ButtonVariant, Icon, Spacer},
+    controls::{
+        Button as QuillButton, ButtonVariant, Icon, MenuButton, MenuItem as QuillMenuItem,
+        MenuPopup, Slider as QuillSlider, Spacer,
+    },
+    focus::{AutoFocus, DefaultKeyListener, KeyPressEvent, TabGroup},
     size::Size,
     typography,
 };
 use serde::{Deserialize, Serialize};
 
-use crate::loading::TextureAssets;
+use crate::{
+    loading::TextureAssets, lobby::HostLobby, trivia::source::TriviaSource, ShowInspectorUi,
+};
 
 use super::{
-    menu_button_style, menu_row_style, menu_style,
+    menu_button_style, menu_labeled_style, menu_row_style, menu_style, menu_text_input_style,
     utils::{is_false, open_link},
+    widgets::{
+        multi_dropdown::MultiDropdown as QuillMultiDropdown,
+        text_input::{TextInput as QuillTextInput, TextInputType},
+        UseComponentOrDefault,
+    },
     MenuStack, WhichMenu,
 };
 
@@ -34,14 +46,27 @@ pub struct Menu {
 impl ViewTemplate for Menu {
     type View = impl View;
 
-    fn create(&self, _cx: &mut bevy_quill::Cx) -> Self::View {
-        Element::<NodeBundle>::new()
+    fn create(&self, cx: &mut bevy_quill::Cx) -> Self::View {
+        let id = cx.create_entity();
+        cx.world_mut().get_resource_mut::<Focus>().unwrap().0 = Some(id);
+        Element::<NodeBundle>::for_entity(id)
             .named(&self.title)
             .style(menu_style)
+            .insert_dyn(move |_| (TabGroup::default(), AutoFocus), ())
+            .insert_if(cfg!(debug_assertions), || DefaultKeyListener)
+            .insert_if(cfg!(debug_assertions), move || {
+                On::<KeyPressEvent>::run(
+                    move |event: Listener<KeyPressEvent>, mut show: ResMut<ShowInspectorUi>| {
+                        if event.key_code == KeyCode::F12 {
+                            show.0 = !show.0;
+                        };
+                    },
+                )
+            })
             .children((
                 Element::<NodeBundle>::new()
-                    .style((typography::text_default, move |ss: &mut StyleBuilder| {
-                        ss.min_height(Val::Px(150.0))
+                    .style((typography::text_strong, move |ss: &mut StyleBuilder| {
+                        ss.min_height(Val::Px(70.0))
                             .font_size(48.0)
                             .color(colors::PRIMARY);
                     }))
@@ -89,8 +114,20 @@ pub enum MenuItem {
     /// A link to open in a browser
     Link(Link),
 
+    /// A text input to enter text
+    TextInput(TextInput),
+
+    /// A slider to select a value
+    Slider(Slider),
+
     /// A row of several items
     Row(Row),
+
+    /// A dropdown to select an option
+    Dropdown(Dropdown),
+
+    /// A multi-dropdown to select multiple options
+    MultiDropdown(MultiDropdown),
 }
 
 impl ViewTemplate for MenuItem {
@@ -104,7 +141,11 @@ impl ViewTemplate for MenuItem {
             MenuItem::SubMenu(sub_menu) => sub_menu.into_view_child(),
             MenuItem::Button(button) => button.into_view_child(),
             MenuItem::Link(link) => link.into_view_child(),
+            MenuItem::TextInput(text_input) => text_input.into_view_child(),
+            MenuItem::Slider(slider) => slider.into_view_child(),
             MenuItem::Row(row) => row.into_view_child(),
+            MenuItem::Dropdown(dropdown) => dropdown.into_view_child(),
+            MenuItem::MultiDropdown(multi_dropdown) => multi_dropdown.into_view_child(),
         }
     }
 }
@@ -121,6 +162,9 @@ pub enum MenuAction {
     #[cfg(target_arch = "wasm32")]
     /// Reload the game, web only
     Reload,
+
+    /// Open the Lobby from the [`WhichMenu::HostGame`] Menu
+    HostLobby,
 }
 
 /// A button to click
@@ -143,9 +187,11 @@ impl ViewTemplate for Button {
 
         QuillButton::new()
             .on_click(cx.create_callback(
-                move |mut next_state: ResMut<NextState<WhichMenu>>,
+                move |mut commands: Commands,
+                      mut next_state: ResMut<NextState<WhichMenu>>,
                       mut menu_stack: ResMut<MenuStack>,
-                      mut app_exit: EventWriter<AppExit>| {
+                      mut app_exit: EventWriter<AppExit>,
+                      start_host_lobby: Res<HostLobby>| {
                     debug!("Menu Stack: {:?}", menu_stack);
                     match action {
                         MenuAction::Quit => {
@@ -162,6 +208,9 @@ impl ViewTemplate for Button {
                         MenuAction::Reload => {
                             let location = web_sys::window().unwrap().location();
                             location.reload().unwrap();
+                        }
+                        MenuAction::HostLobby => {
+                            commands.run_system(**start_host_lobby);
                         }
                     }
                 },
@@ -316,6 +365,110 @@ impl ViewTemplate for SubMenu {
     }
 }
 
+#[derive(Serialize, Deserialize, TypePath, Clone, Debug, PartialEq)]
+pub struct TextInput {
+    /// The label to display
+    label: String,
+
+    /// The default value of the text input
+    #[serde(skip_serializing_if = "String::is_empty", default)]
+    default_value: String,
+
+    /// The maximum length of the text input
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    max_length: Option<usize>,
+
+    /// The name of the text input, for fetching the value from components
+    name: String,
+
+    /// The type of the text input
+    #[serde(
+        skip_serializing_if = "TextInputType::is_default",
+        default,
+        rename(deserialize = "type", serialize = "type")
+    )]
+    type_: TextInputType,
+}
+
+impl ViewTemplate for TextInput {
+    type View = impl View;
+
+    fn create(&self, _cx: &mut bevy_quill::Cx) -> Self::View {
+        let label = self.label.clone();
+        let default_value = self.default_value.clone();
+
+        Element::<NodeBundle>::new()
+            .style((menu_labeled_style, typography::text_strong))
+            .children((
+                label,
+                QuillTextInput::new()
+                    .named(&self.name)
+                    .default_value(default_value)
+                    .max_length(self.max_length)
+                    .style(menu_text_input_style)
+                    .size(Size::Xl)
+                    .type_(self.type_),
+            ))
+    }
+}
+
+/// A slider to select a value
+#[derive(Serialize, Deserialize, TypePath, Clone, Debug, PartialEq)]
+pub struct Slider {
+    /// The label to display
+    label: String,
+
+    /// The default value of the slider
+    value: usize,
+
+    /// The minimum value of the slider
+    min: usize,
+
+    /// The maximum value of the slider
+    max: usize,
+
+    /// The name of the slider, for fetching the value from components
+    name: String,
+}
+
+#[derive(Component, Debug, Default, Clone, Reflect, Deref, DerefMut, PartialEq, Eq)]
+pub struct SliderValue(usize);
+
+impl ViewTemplate for Slider {
+    type View = impl View;
+
+    fn create(&self, cx: &mut bevy_quill::Cx) -> Self::View {
+        let id = cx.create_entity();
+        let label = self.label.clone();
+        let value = cx
+            .use_component_or::<SliderValue>(id, SliderValue(self.value))
+            .clone();
+        let value = cx.create_mutable(*value);
+
+        Element::<NodeBundle>::for_entity(id)
+            .style((menu_labeled_style, typography::text_strong))
+            .insert_dyn(Name::new, self.name.clone())
+            .insert_dyn(SliderValue, value.get(cx))
+            .children((
+                label,
+                QuillSlider::new()
+                    .value(value.get(cx) as f32)
+                    .precision(0)
+                    .step(1.0)
+                    .range(self.min as f32..=self.max as f32)
+                    .style(menu_text_input_style)
+                    .on_change(cx.create_callback(move |v: In<f32>, world: &mut World| {
+                        info!("Slider value changed to {:?}", *v);
+                        let mut ent = world.entity_mut(id);
+                        if !ent.contains::<SliderValue>() {
+                            ent.insert(SliderValue(v.round() as usize));
+                        }
+                        value.set(world, v.round() as usize);
+                    })),
+            ))
+    }
+}
+
 /// A row of several items
 #[derive(Serialize, Deserialize, TypePath, Clone, Debug, PartialEq)]
 pub struct Row(Vec<MenuItem>);
@@ -330,5 +483,64 @@ impl ViewTemplate for Row {
                 .map(|item| item.clone().into_view_child())
                 .collect::<Vec<_>>(),
         )
+    }
+}
+
+#[derive(Serialize, Deserialize, TypePath, Clone, Debug, PartialEq)]
+pub struct Dropdown {
+    label: String,
+    source: TriviaSource,
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    selected: Option<usize>,
+}
+
+impl ViewTemplate for Dropdown {
+    type View = impl View;
+
+    fn create(&self, _cx: &mut bevy_quill::Cx) -> Self::View {
+        let label = self.label.clone();
+        let source = self.source.clone();
+
+        Element::<NodeBundle>::new()
+            .style((menu_labeled_style, typography::text_strong))
+            .children(
+                MenuButton::new().children(label).popup(
+                    MenuPopup::new().children(
+                        source
+                            .iter()
+                            .map(|s| QuillMenuItem::new().label(s).into_view_child())
+                            .collect::<Vec<_>>(),
+                    ),
+                ),
+            )
+    }
+}
+
+#[derive(Serialize, Deserialize, TypePath, Clone, Debug, PartialEq)]
+pub struct MultiDropdown {
+    /// The label to display
+    label: String,
+    /// The options to choose from
+    options: TriviaSource,
+    /// The selected options
+    selected: Vec<usize>,
+    /// The name of the dropdown, for fetching the value from components
+    name: String,
+}
+
+impl ViewTemplate for MultiDropdown {
+    type View = impl View;
+
+    fn create(&self, _cx: &mut bevy_quill::Cx) -> Self::View {
+        let label = self.label.clone();
+        let options = self.options.clone();
+        let selected = &self.selected;
+
+        QuillMultiDropdown::new()
+            .label(label)
+            .source(options)
+            .selected(selected)
+            .named(&self.name)
+            .into_view_child()
     }
 }

@@ -12,6 +12,10 @@ members = ["mobile"]
 [profile.dev.package."*"]
 opt-level = 3
 
+[lib]
+name = "bevy_trivia"
+crate-type = ["rlib", "cdylib"]
+
 [profile.dev]
 opt-level = 1
 
@@ -78,6 +82,9 @@ log = { version = "0.4", features = [
 leafwing-input-manager = "0.14.0"
 bevy_mod_picking = "0.20.1"
 
+# bevy_quill = { path = "../quill" }
+# bevy_quill_obsidian = { path = "../quill/crates/bevy_quill_obsidian" }
+# bevy_mod_stylebuilder = { path = "../quill/crates/bevy_mod_stylebuilder" }
 bevy_mod_stylebuilder = { git = "https://github.com/viridia/quill.git", rev = "f178508" }
 bevy_quill = { git = "https://github.com/viridia/quill.git", rev = "f178508" }
 bevy_quill_obsidian = { git = "https://github.com/viridia/quill.git", rev = "f178508" }
@@ -103,9 +110,16 @@ bevy_quill_obsidian = { workspace = true }
 serde = { workspace = true }
 bevy_common_assets = { workspace = true }
 bevy_embedded_assets = { workspace = true }
+bevy-inspector-egui = "0.25.1"
+bevy_egui = "0.28.0"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 web-sys = { version = "0.3", features = ["Location"] }
 
 [build-dependencies]
 embed-resource = "2.4"
+
+# [patch.'https://github.com/viridia/quill.git']
+# bevy_quill = { path = "../quill" }
+# bevy_quill_obsidian = { path = "../quill/crates/bevy_quill_obsidian" }
+# bevy_mod_stylebuilder = { path = "../quill/crates/bevy_mod_stylebuilder" }
