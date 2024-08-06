@@ -16,7 +16,7 @@ use bevy_mod_stylebuilder::{
     StyleBuilder, StyleBuilderBackground, StyleBuilderFont, StyleBuilderLayout,
     StyleBuilderOutline, StyleHandle, StyleTuple,
 };
-use bevy_quill::{Callback, Cx, Element, RunCallback, View, ViewTemplate};
+use bevy_quill::{Callback, Cx, EffectOptions, Element, RunCallback, View, ViewTemplate};
 use bevy_quill_obsidian::{
     colors,
     controls::{Disabled, IsDisabled},
@@ -27,6 +27,7 @@ use bevy_quill_obsidian::{
     size::Size,
     typography, RoundedCorners,
 };
+use serde::{Deserialize, Serialize};
 
 use crate::loading::MenuAssets;
 
@@ -45,12 +46,37 @@ pub struct TextInputCursorTimer {
     should_reset: bool,
 }
 
+#[derive(Component, Debug, Default, Clone, Reflect)]
+pub struct TextInputValueInvalid;
+
 impl Default for TextInputCursorTimer {
     fn default() -> Self {
         Self {
             timer: Timer::from_seconds(0.5, TimerMode::Repeating),
             visible: true,
             should_reset: false,
+        }
+    }
+}
+
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Reflect, Serialize, Deserialize)]
+pub enum TextInputType {
+    #[default]
+    Text,
+    Integer,
+    Float,
+}
+
+impl TextInputType {
+    pub fn is_default(&self) -> bool {
+        matches!(self, Self::Text)
+    }
+
+    pub fn is_valid(&self, v: &str) -> bool {
+        match self {
+            Self::Text => true,
+            Self::Integer => v.parse::<i32>().is_ok(),
+            Self::Float => v.parse::<f32>().is_ok(),
         }
     }
 }
@@ -71,6 +97,7 @@ pub struct TextInput {
     pub on_submit: Option<Callback>,
     pub max_length: Option<usize>,
     pub name: String,
+    pub type_: TextInputType,
 }
 
 impl TextInput {
@@ -128,8 +155,13 @@ impl TextInput {
         self
     }
 
-    pub(crate) fn named(mut self, name: &str) -> Self {
+    pub fn named(mut self, name: &str) -> Self {
         self.name = name.to_string();
+        self
+    }
+
+    pub fn type_(mut self, type_: TextInputType) -> Self {
+        self.type_ = type_;
         self
     }
 }
@@ -180,13 +212,33 @@ impl ViewTemplate for TextInput {
             .map(|l| self.default_value.chars().take(l).collect())
             .unwrap_or(self.default_value.clone());
 
+        let _invalid = cx.world_mut().init_component::<TextInputValueInvalid>();
+        let _is_invalid: Option<TextInputValueInvalid> =
+            cx.use_component::<TextInputValueInvalid>(id).cloned();
         let (value, cursor_pos) = fetch_value_and_cursor_pos(cx, id, default_value);
+
         let before = value.chars().take(cursor_pos).collect::<String>();
         let after = value
             .chars()
             .skip(cursor_pos)
             .chain(std::iter::once(' '))
             .collect::<String>();
+
+        let my_value = value.clone();
+        let is_valid = self.type_.is_valid(&my_value);
+        cx.create_effect_ext(
+            |world, (value,)| {
+                if self.type_.is_valid(&value) {
+                    world.entity_mut(id).remove::<TextInputValueInvalid>();
+                } else {
+                    world.entity_mut(id).insert(TextInputValueInvalid);
+                }
+            },
+            (my_value,),
+            EffectOptions {
+                run_immediately: true,
+            },
+        );
         let timer = cx.use_component_or_default::<TextInputCursorTimer>(id);
         let cursor_visible = timer.visible;
 
@@ -381,15 +433,17 @@ impl ViewTemplate for TextInput {
                         self.size,
                     )
                     .style_dyn(
-                        |(minimal, disabled, hovering), sb| {
-                            let color = if minimal {
+                        |(minimal, disabled, hovering, is_valid), sb| {
+                            let color = if !is_valid {
+                                colors::DESTRUCTIVE
+                            } else if minimal {
                                 colors::TRANSPARENT
                             } else {
                                 text_input_bg_color(disabled, hovering)
                             };
                             sb.background_color(color);
                         },
-                        (minimal, self.disabled, hovering),
+                        (minimal, self.disabled, hovering, is_valid),
                     )
                     .style_dyn(
                         move |focused, sb| {

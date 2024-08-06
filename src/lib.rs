@@ -138,7 +138,11 @@ fn inspector_ui(world: &mut World) {
     egui::Window::new("UI").show(egui_context.get_mut(), |ui| {
         egui::ScrollArea::vertical().show(ui, |ui| {
             // equivalent to `WorldInspectorPlugin`
-            // bevy_inspector_egui::bevy_inspector::ui_for_world(world, ui);
+            egui::CollapsingHeader::new("Entities")
+                .default_open(false)
+                .show(ui, |ui| {
+                    bevy_inspector_egui::bevy_inspector::ui_for_world_entities(world, ui);
+                });
 
             egui::CollapsingHeader::new("Resources")
                 .default_open(true)

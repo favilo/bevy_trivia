@@ -6,7 +6,7 @@ use bevy_quill_obsidian::{
     colors,
     controls::{
         Button as QuillButton, ButtonVariant, Icon, MenuButton, MenuItem as QuillMenuItem,
-        MenuPopup, Spacer,
+        MenuPopup, Slider as QuillSlider, Spacer,
     },
     focus::{AutoFocus, DefaultKeyListener, KeyPressEvent, TabGroup},
     size::Size,
@@ -23,7 +23,8 @@ use super::{
     utils::{is_false, open_link},
     widgets::{
         multi_dropdown::MultiDropdown as QuillMultiDropdown,
-        text_input::TextInput as QuillTextInput,
+        text_input::{TextInput as QuillTextInput, TextInputType},
+        UseComponentOrDefault,
     },
     MenuStack, WhichMenu,
 };
@@ -116,6 +117,9 @@ pub enum MenuItem {
     /// A text input to enter text
     TextInput(TextInput),
 
+    /// A slider to select a value
+    Slider(Slider),
+
     /// A row of several items
     Row(Row),
 
@@ -138,6 +142,7 @@ impl ViewTemplate for MenuItem {
             MenuItem::Button(button) => button.into_view_child(),
             MenuItem::Link(link) => link.into_view_child(),
             MenuItem::TextInput(text_input) => text_input.into_view_child(),
+            MenuItem::Slider(slider) => slider.into_view_child(),
             MenuItem::Row(row) => row.into_view_child(),
             MenuItem::Dropdown(dropdown) => dropdown.into_view_child(),
             MenuItem::MultiDropdown(multi_dropdown) => multi_dropdown.into_view_child(),
@@ -375,6 +380,14 @@ pub struct TextInput {
 
     /// The name of the text input, for fetching the value from components
     name: String,
+
+    /// The type of the text input
+    #[serde(
+        skip_serializing_if = "TextInputType::is_default",
+        default,
+        rename(deserialize = "type", serialize = "type")
+    )]
+    type_: TextInputType,
 }
 
 impl ViewTemplate for TextInput {
@@ -393,7 +406,65 @@ impl ViewTemplate for TextInput {
                     .default_value(default_value)
                     .max_length(self.max_length)
                     .style(menu_text_input_style)
-                    .size(Size::Xl),
+                    .size(Size::Xl)
+                    .type_(self.type_),
+            ))
+    }
+}
+
+/// A slider to select a value
+#[derive(Serialize, Deserialize, TypePath, Clone, Debug, PartialEq)]
+pub struct Slider {
+    /// The label to display
+    label: String,
+
+    /// The default value of the slider
+    value: usize,
+
+    /// The minimum value of the slider
+    min: usize,
+
+    /// The maximum value of the slider
+    max: usize,
+
+    /// The name of the slider, for fetching the value from components
+    name: String,
+}
+
+#[derive(Component, Debug, Default, Clone, Reflect, Deref, DerefMut, PartialEq, Eq)]
+pub struct SliderValue(usize);
+
+impl ViewTemplate for Slider {
+    type View = impl View;
+
+    fn create(&self, cx: &mut bevy_quill::Cx) -> Self::View {
+        let id = cx.create_entity();
+        let label = self.label.clone();
+        let value = cx
+            .use_component_or::<SliderValue>(id, SliderValue(self.value))
+            .clone();
+        let value = cx.create_mutable(*value);
+
+        Element::<NodeBundle>::for_entity(id)
+            .style((menu_labeled_style, typography::text_strong))
+            .insert_dyn(Name::new, self.name.clone())
+            .insert_dyn(SliderValue, value.get(cx))
+            .children((
+                label,
+                QuillSlider::new()
+                    .value(value.get(cx) as f32)
+                    .precision(0)
+                    .step(1.0)
+                    .range(self.min as f32..=self.max as f32)
+                    .style(menu_text_input_style)
+                    .on_change(cx.create_callback(move |v: In<f32>, world: &mut World| {
+                        info!("Slider value changed to {:?}", *v);
+                        let mut ent = world.entity_mut(id);
+                        if !ent.contains::<SliderValue>() {
+                            ent.insert(SliderValue(v.round() as usize));
+                        }
+                        value.set(world, v.round() as usize);
+                    })),
             ))
     }
 }

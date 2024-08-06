@@ -20,10 +20,11 @@ Menu(
             name: "question_types",
         )),
         // Spacer,
-        TextInput((
+        Slider((
             label: "Number of Questions",
-            default_value: "10",
-            max_length: Some(3),
+            value: 10,
+            min: 1,
+            max: 100,
             name: "num_questions",
         )),
         Spacer,

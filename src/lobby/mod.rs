@@ -4,9 +4,12 @@ use bevy::{
 };
 
 use crate::{
-    menu::widgets::{
-        multi_dropdown::{MultiDropdownSelected, MultiDropdownSource},
-        text_input::TextInputValue,
+    menu::{
+        serde::SliderValue,
+        widgets::{
+            multi_dropdown::{MultiDropdownSelected, MultiDropdownSource},
+            text_input::{TextInputValue, TextInputValueInvalid},
+        },
     },
     GameState,
 };
@@ -35,7 +38,6 @@ pub struct HostLobby(pub SystemId);
 #[reflect(Resource)]
 pub struct GameName(String);
 
-// TODO: Add integer parsing and validation to TextInput
 #[derive(Default, Deref, DerefMut, Clone, Debug, Resource, Reflect)]
 #[reflect(Resource)]
 pub struct NumQuestions(usize);
@@ -62,6 +64,7 @@ struct HostLobbyParams<'w, 's> {
             &'static Name,
         ),
     >,
+    sliders: Query<'w, 's, (&'static SliderValue, &'static Name)>,
     game_name: ResMut<'w, GameName>,
     num_questions: ResMut<'w, NumQuestions>,
     question_types: ResMut<'w, QuestionTypes>,
@@ -80,14 +83,11 @@ impl<'w, 's> HostLobbyParams<'w, 's> {
         );
         // TODO: Safely parse the values
         *self.num_questions = NumQuestions(
-            (*self
-                .texts
+            *self
+                .sliders
                 .iter()
                 .find_map(|(v, n)| (n.as_str() == "num_questions").then_some(v.clone()))
-                .unwrap())
-            .clone()
-            .parse()
-            .unwrap(),
+                .unwrap(),
         );
         *self.question_types = QuestionTypes({
             let (source, selected) = self
@@ -111,7 +111,12 @@ impl<'w, 's> HostLobbyParams<'w, 's> {
 fn start_host_lobby(
     mut next_game_state: ResMut<NextState<GameState>>,
     mut params: HostLobbyParams,
+    invalid_text_inputs: Query<&TextInputValueInvalid>,
 ) {
+    if invalid_text_inputs.iter().len() > 0 {
+        return;
+    }
+
     params.fetch_form_values();
     next_game_state.set(GameState::Playing);
 }
