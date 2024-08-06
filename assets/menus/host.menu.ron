@@ -1,0 +1,36 @@
+Menu(
+    title: "Host Game",
+    children: [
+        TextInput((
+            label: "Game Name",
+            default_value: "My Game",
+            max_length: Some(30),
+            name: "game_name",
+        )),
+        MultiDropdown((
+            label: "Difficulty",
+            options: String((["Easy", "Medium", "Hard"])),
+            selected: [0, 1, 2],
+            name: "difficulty",
+        )),
+        MultiDropdown((
+            label: "Allowed Question Types",
+            options: String((["Multiple Choice", "True/False"])),
+            selected: [0, 1],
+            name: "question_types",
+        )),
+        // Spacer,
+        Slider((
+            label: "Number of Questions",
+            value: 10,
+            min: 1,
+            max: 100,
+            name: "num_questions",
+        )),
+        Spacer,
+        Button((
+            label: "Open Lobby",
+            action: HostLobby,
+        ))
+    ],
+)

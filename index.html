@@ -8,7 +8,7 @@
         
         
         <link rel="icon" href="icon.ico">
-        <style nonce="oRQBe2vY/+WByPG5SdgvRA==">body, html {
+        <style nonce="2UfzdskftUTpyBuJ/c/CeQ==">body, html {
     height: 100%;
 }
 
@@ -62,11 +62,23 @@ body {
     z-index: 2;
 }
 </style>
+        
+<script type="module" nonce="zRVppaknivMmvpVC38S6FA==">
+import init, * as bindings from './favilo_trivia-3868e62e75542f74.js';
+const wasm = await init('./favilo_trivia-3868e62e75542f74_bg.wasm');
+
+
+window.wasmBindings = bindings;
+
+
+dispatchEvent(new CustomEvent("TrunkApplicationStarted", {detail: {wasm}}));
+
+</script>
     
-<link rel="modulepreload" href="./bevy_trivia-ccf8835dccc94f40.js" crossorigin=anonymous integrity="sha384-Bh1ZJHpMz3XAhz5RcKJkObM1l217nqVkm1dDXMugzFTyHRBOnP4p9IN8WiCW1Zgi">
-<link rel="preload" href="./bevy_trivia-ccf8835dccc94f40_bg.wasm" crossorigin=anonymous integrity="sha384-1RjT2EH8vld3MQ72fvUKECVtOYA45rY7MOTHeP23fH63b77IniJlDCBSNhPdA68b" as="fetch" type="application/wasm"></head>
+<link rel="modulepreload" href="./favilo_trivia-3868e62e75542f74.js" crossorigin=anonymous integrity="sha384-z2NMCRiLUsRJdm/SZM8hftWf3d8UEtW5rTaS9PMWBMaxb20Eq+PR1tvc+J/7Wok/">
+<link rel="preload" href="./favilo_trivia-3868e62e75542f74_bg.wasm" crossorigin=anonymous integrity="sha384-HLHj0IltJF1agoq8W0AMJMlP/u6ndoTP9vtXLEL8jzyaxC7xPa/dSC+214KE9nZ7" as="fetch" type="application/wasm"></head>
     <body>
-        <script nonce="GDc1JUS51TKwj1AqmoCT5g==">// Insert hack to make sound autoplay on Chrome as soon as the user interacts with the tab:
+        <script nonce="qGacZ/+VIJG3UbyGAHc7cA==">// Insert hack to make sound autoplay on Chrome as soon as the user interacts with the tab:
 // https://developers.google.com/web/updates/2018/11/web-audio-autoplay#moving-forward
 
 // the following function keeps track of all AudioContexts and resumes them on the first user
@@ -135,16 +147,5 @@ body {
                 Javascript and support for canvas is required
             </canvas>
         </div>
-    
-<script type="module" nonce="2gu/rhimTRJmJIQs3siyeA==">
-import init, * as bindings from './bevy_trivia-ccf8835dccc94f40.js';
-const wasm = await init('./bevy_trivia-ccf8835dccc94f40_bg.wasm');
-
-
-window.wasmBindings = bindings;
-
-
-dispatchEvent(new CustomEvent("TrunkApplicationStarted", {detail: {wasm}}));
-
-</script></body>
+    </body>
 </html>

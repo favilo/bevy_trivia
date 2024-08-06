@@ -3,9 +3,13 @@ Menu(
     main_menu: true,
     children: [
         SubMenu((
-            label: "Play",
-            menu: Play,
+            label: "Join Game",
+            menu: JoinGame,
             variant: Primary,
+        )),
+        SubMenu((
+            label: "Host Game",
+            menu: HostGame,
         )),
         SubMenu((
             label: "Settings",

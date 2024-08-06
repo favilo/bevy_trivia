@@ -1,6 +1,0 @@
-Menu(
-    title: "Play",
-    children: [
-        Spacer,
-    ],
-)
