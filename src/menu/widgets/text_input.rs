@@ -383,8 +383,10 @@ impl ViewTemplate for TextInput {
                                 }
                                 _ => {}
                             }
-                            if run_callback && on_submit.is_some() {
-                                world.run_callback(on_submit.unwrap(), ());
+                            if run_callback {
+                                if let Some(on_submit) = on_submit {
+                                    world.run_callback(on_submit, ());
+                                }
                             }
                         }),
                         On::<KeyCharEvent>::run(move |world: &mut World| {
