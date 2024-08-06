@@ -206,7 +206,7 @@ impl ViewTemplate for Button {
                         }
                         #[cfg(target_arch = "wasm32")]
                         MenuAction::Reload => {
-                            let location = web_sys::window().unwrap().location();
+                            let location = gloo_utils::window().location();
                             location.reload().unwrap();
                         }
                         MenuAction::HostLobby => {
