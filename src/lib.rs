@@ -14,20 +14,11 @@ use crate::{
     menu::MenuPlugin, player::PlayerPlugin,
 };
 
-#[cfg(debug_assertions)]
-use bevy::diagnostic::{
-    // FrameTimeDiagnosticsPlugin,
-    LogDiagnosticsPlugin,
-};
+use bevy::app::App;
 use bevy::prelude::*;
-use bevy::{app::App, window::PrimaryWindow};
-use bevy_egui::{egui, EguiContext, EguiPlugin};
-use bevy_mod_picking::prelude::{Listener, On};
 use bevy_mod_picking::DefaultPickingPlugins;
-use bevy_quill::{Element, QuillPlugin, View};
-use bevy_quill_obsidian::focus::{DefaultKeyListener, KeyPressEvent};
+use bevy_quill::QuillPlugin;
 use bevy_quill_obsidian::{colors, ObsidianUiPlugin};
-use lobby::{GameName, NumQuestions, QuestionDifficulty, QuestionTypes};
 
 // This example game uses States to separate logic
 // See https://github.com/bevyengine/bevy/blob/main/examples/ecs/state.rs
@@ -71,12 +62,12 @@ impl Plugin for GamePlugin {
         {
             app.add_plugins((
                 //FrameTimeDiagnosticsPlugin,
-                LogDiagnosticsPlugin::default(),
-                EguiPlugin,
+                debug::LogDiagnosticsPlugin::default(),
+                debug::EguiPlugin,
                 bevy_inspector_egui::DefaultInspectorConfigPlugin,
             ))
-            .add_systems(Update, inspector_ui)
-            .add_systems(Startup, setup_inspector);
+            .add_systems(Update, debug::inspector_ui)
+            .add_systems(Startup, debug::setup_inspector);
         }
     }
 }
@@ -85,12 +76,30 @@ fn setup_camera(mut commands: Commands) {
     commands.spawn(Camera2dBundle::default());
 }
 
-fn setup_inspector(mut commands: Commands) {
-    commands.spawn(
-        Element::<NodeBundle>::new()
-            .insert_dyn(
-                |_| {
-                    (
+#[derive(Resource)]
+struct ShowInspectorUi(bool);
+
+#[cfg(debug_assertions)]
+mod debug {
+    use bevy::window::PrimaryWindow;
+    pub use bevy::{diagnostic::LogDiagnosticsPlugin, prelude::*};
+    pub use bevy_egui::EguiPlugin;
+    use bevy_egui::{egui, EguiContext};
+    use bevy_mod_picking::prelude::{Listener, On};
+    use bevy_quill::*;
+    use bevy_quill_obsidian::focus::{DefaultKeyListener, KeyPressEvent};
+
+    use crate::{
+        lobby::{GameName, NumQuestions, QuestionDifficulty, QuestionTypes},
+        ShowInspectorUi,
+    };
+
+    pub fn setup_inspector(mut commands: Commands) {
+        commands.spawn(
+            Element::<NodeBundle>::new()
+                .insert_dyn(
+                    |_| {
+                        (
                         DefaultKeyListener,
                         On::<KeyPressEvent>::run(
                             move |event: Listener<KeyPressEvent>,
@@ -102,59 +111,57 @@ fn setup_inspector(mut commands: Commands) {
                             },
                         ),
                     )
-                },
-                (),
-            )
-            .to_root(),
-    );
-}
-
-macro_rules! ui_for_resource {
-    ($resource:ty, $world:expr, $ui:expr) => {
-        $ui.collapsing(stringify!($resource), |ui| {
-            bevy_inspector_egui::bevy_inspector::ui_for_resource::<$resource>($world, ui)
-        });
-    };
-}
-
-#[derive(Resource)]
-struct ShowInspectorUi(bool);
-
-fn inspector_ui(world: &mut World) {
-    let show_inspector_ui = world.resource::<ShowInspectorUi>().0;
-    if !show_inspector_ui {
-        return;
+                    },
+                    (),
+                )
+                .to_root(),
+        );
     }
 
-    let Ok(egui_context) = world
-        .query_filtered::<&mut EguiContext, With<PrimaryWindow>>()
-        .get_single(world)
-    else {
-        return;
-    };
+    macro_rules! ui_for_resource {
+        ($resource:ty, $world:expr, $ui:expr) => {
+            $ui.collapsing(stringify!($resource), |ui| {
+                bevy_inspector_egui::bevy_inspector::ui_for_resource::<$resource>($world, ui)
+            });
+        };
+    }
 
-    let mut egui_context = egui_context.clone();
+    pub fn inspector_ui(world: &mut World) {
+        let show_inspector_ui = world.resource::<ShowInspectorUi>().0;
+        if !show_inspector_ui {
+            return;
+        }
 
-    egui::Window::new("UI").show(egui_context.get_mut(), |ui| {
-        egui::ScrollArea::vertical().show(ui, |ui| {
-            // equivalent to `WorldInspectorPlugin`
-            egui::CollapsingHeader::new("Entities")
-                .default_open(false)
-                .show(ui, |ui| {
-                    bevy_inspector_egui::bevy_inspector::ui_for_world_entities(world, ui);
-                });
+        let Ok(egui_context) = world
+            .query_filtered::<&mut EguiContext, With<PrimaryWindow>>()
+            .get_single(world)
+        else {
+            return;
+        };
 
-            egui::CollapsingHeader::new("Resources")
-                .default_open(true)
-                .show(ui, |ui| {
-                    ui_for_resource!(GameName, world, ui);
-                    ui_for_resource!(NumQuestions, world, ui);
-                    ui_for_resource!(QuestionDifficulty, world, ui);
-                    ui_for_resource!(QuestionTypes, world, ui);
-                });
+        let mut egui_context = egui_context.clone();
 
-            // ui.heading("Entities");
-            // bevy_inspector_egui::bevy_inspector::ui_for_world_entities(world, ui);
+        egui::Window::new("UI").show(egui_context.get_mut(), |ui| {
+            egui::ScrollArea::vertical().show(ui, |ui| {
+                // equivalent to `WorldInspectorPlugin`
+                egui::CollapsingHeader::new("Entities")
+                    .default_open(false)
+                    .show(ui, |ui| {
+                        bevy_inspector_egui::bevy_inspector::ui_for_world_entities(world, ui);
+                    });
+
+                egui::CollapsingHeader::new("Resources")
+                    .default_open(true)
+                    .show(ui, |ui| {
+                        ui_for_resource!(GameName, world, ui);
+                        ui_for_resource!(NumQuestions, world, ui);
+                        ui_for_resource!(QuestionDifficulty, world, ui);
+                        ui_for_resource!(QuestionTypes, world, ui);
+                    });
+
+                // ui.heading("Entities");
+                // bevy_inspector_egui::bevy_inspector::ui_for_world_entities(world, ui);
+            });
         });
-    });
+    }
 }
