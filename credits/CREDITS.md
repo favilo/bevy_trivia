@@ -1,5 +1,7 @@
 # Credits
 
+[Kevin Oberlies](https://github.com/favilo)
+
 This game uses the following open source projects:
 
 ## Code
