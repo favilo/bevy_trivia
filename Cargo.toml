@@ -2,7 +2,7 @@
 name = "bevy_trivia"
 version = "0.1.0"
 publish = false
-authors = ["Niklas Eicker <git@nikl.me>"]        # ToDo: you are the author ;)
+authors = ["Kevin Oberlies <favilo@gmail.com>"]
 edition = "2021"
 exclude = ["dist", "build", "assets", "credits"]
 
@@ -89,9 +89,9 @@ bevy_mod_picking = "0.20.1"
 # bevy_quill = { path = "../quill" }
 # bevy_quill_obsidian = { path = "../quill/crates/bevy_quill_obsidian" }
 # bevy_mod_stylebuilder = { path = "../quill/crates/bevy_mod_stylebuilder" }
-bevy_mod_stylebuilder = { git = "https://github.com/viridia/quill.git", rev = "f178508" }
-bevy_quill = { git = "https://github.com/viridia/quill.git", rev = "f178508" }
-bevy_quill_obsidian = { git = "https://github.com/viridia/quill.git", rev = "f178508" }
+bevy_mod_stylebuilder = { git = "https://github.com/viridia/quill.git", rev = "cabae32b890cd8d2c441f4347e5e3de79ef760da" }
+bevy_quill = { git = "https://github.com/viridia/quill.git", rev = "cabae32b890cd8d2c441f4347e5e3de79ef760da" }
+bevy_quill_obsidian = { git = "https://github.com/viridia/quill.git", rev = "cabae32b890cd8d2c441f4347e5e3de79ef760da" }
 serde = { version = "1.0.204", features = ["derive"] }
 bevy_common_assets = { version = "0.11.0", features = ["ron"] }
 bevy_embedded_assets = "0.11.0"

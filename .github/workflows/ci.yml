@@ -29,6 +29,24 @@ jobs:
         if: runner.os == 'linux'
       - name: Build & run tests
         run: cargo test
+  builds-on-android:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Dependencies
+        run: sudo apt-get update; sudo apt-get install pkg-config libx11-dev libasound2-dev libudev-dev lld llvm
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Add Android targets
+        run: rustup target add aarch64-linux-android armv7-linux-androideabi
+      - name: Install cargo-binstall
+        run: curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
+      - name: Install xbuild
+        run: cargo binstall --git https://github.com/favilo/xbuild --bin-dir x xbuild -y
+      - name: Build app bundle
+        run: |
+          # cd ${{ env.MOBILE_DIRECTORY }}
+          x doctor
+          x build -p mobile --platform android --store play
   all-doc-tests:
     runs-on: ubuntu-latest
     steps:

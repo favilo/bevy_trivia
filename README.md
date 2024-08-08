@@ -22,7 +22,7 @@ Networking is done using the [Lightyear](https://github.com/cBournhonesque/light
         * requires [trunk]: `cargo install --locked trunk`
         * requires `wasm32-unknown-unknown` target: `rustup target add wasm32-unknown-unknown`
         * this will serve your app on `8080` and automatically rebuild + reload it after code changes
-    * Start the android app: `cargo apk run -p mobile`
+    * Start the android app: `x run -p mobile --format=apk --device=<DEVICE-ID>`
         * requires following the instructions in the [bevy example readme for android setup][android-instructions]
     * Start the iOS app (see the [bevy example readme for ios setup instructions][ios-instructions])
         * Install Xcode through the app store
@@ -82,7 +82,7 @@ Audio in web-builds can have issues in some browsers. This seems to be a general
 
 # License
 
-This project is licensed under [CC0 1.0 Universal](LICENSE) except some content of `assets` and the Bevy icons in the `build` directory (see [Credits](credits/CREDITS.md)). Go crazy and feel free to show me whatever you build with this ([@nikl_me][nikl-twitter] / [@nikl_me@mastodon.online][nikl-mastodon] ).
+This project is licensed under the [Apache License, Version 2.0](LICENSE) except some content of `assets` and the Bevy icons in the `build` directory (see [Credits](credits/CREDITS.md)). Go crazy and feel free to show me whatever you build with this ([@nikl_me][nikl-twitter] / [@nikl_me@mastodon.online][nikl-mastodon] ).
 
 [bevy]: https://bevyengine.org/
 [bevy-learn]: https://bevyengine.org/learn/
