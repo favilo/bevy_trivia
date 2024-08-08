@@ -998,8 +998,8 @@ dependencies = [
 
 [[package]]
 name = "bevy_mod_stylebuilder"
-version = "0.1.1"
-source = "git+https://github.com/viridia/quill.git?rev=f178508#f178508c9e583081310f11d4cd9fb1b5eb207379"
+version = "0.1.3"
+source = "git+https://github.com/viridia/quill.git?rev=cabae32b890cd8d2c441f4347e5e3de79ef760da#cabae32b890cd8d2c441f4347e5e3de79ef760da"
 dependencies = [
  "bevy",
  "bevy_mod_picking",
@@ -1163,8 +1163,8 @@ checksum = "c115c97a5c8a263bd0aa7001b999772c744ac5ba797d07c86f25734ce381ea69"
 
 [[package]]
 name = "bevy_quill"
-version = "0.1.3"
-source = "git+https://github.com/viridia/quill.git?rev=f178508#f178508c9e583081310f11d4cd9fb1b5eb207379"
+version = "0.1.6"
+source = "git+https://github.com/viridia/quill.git?rev=cabae32b890cd8d2c441f4347e5e3de79ef760da#cabae32b890cd8d2c441f4347e5e3de79ef760da"
 dependencies = [
  "bevy",
  "bevy_mod_stylebuilder",
@@ -1175,8 +1175,8 @@ dependencies = [
 
 [[package]]
 name = "bevy_quill_core"
-version = "0.1.1"
-source = "git+https://github.com/viridia/quill.git?rev=f178508#f178508c9e583081310f11d4cd9fb1b5eb207379"
+version = "0.1.3"
+source = "git+https://github.com/viridia/quill.git?rev=cabae32b890cd8d2c441f4347e5e3de79ef760da#cabae32b890cd8d2c441f4347e5e3de79ef760da"
 dependencies = [
  "bevy",
  "bevy_mod_stylebuilder",
@@ -1186,8 +1186,8 @@ dependencies = [
 
 [[package]]
 name = "bevy_quill_obsidian"
-version = "0.1.1"
-source = "git+https://github.com/viridia/quill.git?rev=f178508#f178508c9e583081310f11d4cd9fb1b5eb207379"
+version = "0.1.3"
+source = "git+https://github.com/viridia/quill.git?rev=cabae32b890cd8d2c441f4347e5e3de79ef760da#cabae32b890cd8d2c441f4347e5e3de79ef760da"
 dependencies = [
  "bevy",
  "bevy_mod_picking",

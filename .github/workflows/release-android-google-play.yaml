@@ -42,7 +42,7 @@ jobs:
       - name: Install cargo-binstall
         run: curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
       - name: Install xbuild
-        run: cargo binstall --git https://github.com/NiklasEi/xbuild --bin-dir x xbuild -y
+        run: cargo binstall --git https://github.com/favilo/xbuild --bin-dir x xbuild -y
       - name: Build app bundle
         run: |
           cd ${{ env.MOBILE_DIRECTORY }}
