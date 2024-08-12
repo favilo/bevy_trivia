@@ -1,8 +1,4 @@
-use bevy::{
-    ecs::{change_detection::DetectChanges, system::SystemState},
-    prelude::*,
-    utils::HashSet,
-};
+use bevy::{prelude::*, utils::HashSet};
 use bevy_mod_stylebuilder::{StyleBuilder, StyleBuilderFont, StyleBuilderLayout, StyleHandle};
 use bevy_quill::*;
 use bevy_quill_obsidian::{
