@@ -10,7 +10,7 @@ use bevy_quill_obsidian::{
 
 use crate::{
     menu::{menu_text_input_style, widgets::UseComponentOrDefault},
-    trivia::source::TriviaSource,
+    trivia::source::{DoneFetching, TriviaSource},
 };
 
 #[derive(Component, Debug, Default, Clone, Deref, DerefMut, PartialEq, Eq)]
@@ -137,6 +137,10 @@ impl ViewTemplate for MultiDropdown {
                 self.style.clone(),
             ))
             .insert_if(self.auto_focus, || AutoFocus)
+            // Don't run systems on String sources
+            .insert_if(matches!(self.source, TriviaSource::String(_)), || {
+                DoneFetching
+            })
             .children(
                 MenuButton::new()
                     .style(menu_text_input_style)
