@@ -1,4 +1,8 @@
-use bevy::{prelude::*, utils::HashSet};
+use bevy::{
+    ecs::{change_detection::DetectChanges, system::SystemState},
+    prelude::*,
+    utils::HashSet,
+};
 use bevy_mod_stylebuilder::{StyleBuilder, StyleBuilderFont, StyleBuilderLayout, StyleHandle};
 use bevy_quill::*;
 use bevy_quill_obsidian::{
@@ -8,12 +12,10 @@ use bevy_quill_obsidian::{
     typography, RoundedCorners,
 };
 
-use crate::{menu::menu_text_input_style, trivia::source::TriviaSource};
-
-use super::UseComponentOrDefault;
-
-#[derive(Component, Debug, Default, Clone, Deref, DerefMut, PartialEq)]
-pub struct MultiDropdownSource(TriviaSource);
+use crate::{
+    menu::{menu_text_input_style, widgets::UseComponentOrDefault},
+    trivia::source::TriviaSource,
+};
 
 #[derive(Component, Debug, Default, Clone, Deref, DerefMut, PartialEq, Eq)]
 pub struct MultiDropdownSelected(HashSet<usize>);
@@ -100,13 +102,30 @@ impl ViewTemplate for MultiDropdown {
         let corners = self.corners;
         let name = self.name.clone();
 
-        let source = cx
-            .use_component_or::<MultiDropdownSource>(id, MultiDropdownSource(source))
-            .clone();
+        let source = cx.use_component_or::<TriviaSource>(id, source).clone();
+        // When the source is done fetching, update the selected values
+        cx.create_effect_ext(
+            move |world: &mut World, (source,)| {
+                if source.get_selected().is_none() {
+                    return;
+                }
+                world
+                    .entity_mut(id)
+                    .insert(MultiDropdownSelected(source.get_selected().unwrap()));
+            },
+            (source.clone(),),
+            EffectOptions {
+                run_immediately: true,
+            },
+        );
         let selected = cx
             .use_component_or::<MultiDropdownSelected>(
                 id,
-                MultiDropdownSelected(HashSet::from_iter(selected.iter().copied())),
+                MultiDropdownSelected(
+                    source
+                        .get_selected()
+                        .unwrap_or(HashSet::from_iter(selected.iter().copied())),
+                ),
             )
             .clone();
 
@@ -156,6 +175,12 @@ impl ViewTemplate for MultiDropdown {
                                                 } else {
                                                     selected.remove(&i);
                                                 }
+                                                let selected = (**selected).clone();
+                                                let mut source =
+                                                    entity.get_mut::<TriviaSource>().expect(
+                                                        "MultiDropdownValues set by `create()`",
+                                                    );
+                                                source.set_selected(selected);
                                             },
                                         ))
                                         .into_view_child()

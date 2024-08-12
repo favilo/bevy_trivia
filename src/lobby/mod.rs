@@ -7,10 +7,11 @@ use crate::{
     menu::{
         serde::SliderValue,
         widgets::{
-            multi_dropdown::{MultiDropdownSelected, MultiDropdownSource},
+            multi_dropdown::MultiDropdownSelected,
             text_input::{TextInputValue, TextInputValueInvalid},
         },
     },
+    trivia::source::TriviaSource,
     GameState,
 };
 
@@ -59,7 +60,7 @@ struct HostLobbyParams<'w, 's> {
         'w,
         's,
         (
-            &'static MultiDropdownSource,
+            &'static TriviaSource,
             &'static MultiDropdownSelected,
             &'static Name,
         ),

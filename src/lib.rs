@@ -8,6 +8,7 @@ mod lobby;
 pub mod menu;
 mod player;
 mod trivia;
+pub mod utils;
 
 use crate::{
     actions::ActionsPlugin, audio::InternalAudioPlugin, loading::LoadingPlugin, lobby::LobbyPlugin,
@@ -16,6 +17,7 @@ use crate::{
 
 use bevy::app::App;
 use bevy::prelude::*;
+use bevy_http_client::HttpClientPlugin;
 use bevy_mod_picking::DefaultPickingPlugins;
 use bevy_quill::QuillPlugin;
 use bevy_quill_obsidian::{colors, ObsidianUiPlugin};
@@ -44,7 +46,12 @@ impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
         app.init_state::<GameState>()
             // These are third party plugins that we need to use
-            .add_plugins((DefaultPickingPlugins, QuillPlugin, ObsidianUiPlugin))
+            .add_plugins((
+                DefaultPickingPlugins,
+                QuillPlugin,
+                ObsidianUiPlugin,
+                HttpClientPlugin,
+            ))
             // These are our own plugins
             .add_plugins((
                 LoadingPlugin,

@@ -8,6 +8,12 @@ Menu(
             name: "game_name",
         )),
         MultiDropdown((
+            label: "Categories",
+            options: OpenTdb(Categories),
+            selected: [],
+            name: "categories",
+        )),
+        MultiDropdown((
             label: "Difficulty",
             options: String((["Easy", "Medium", "Hard"])),
             selected: [0, 1, 2],

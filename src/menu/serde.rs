@@ -12,31 +12,33 @@ use bevy_quill_obsidian::{
     size::Size,
     typography,
 };
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 use crate::{
-    loading::TextureAssets, lobby::HostLobby, trivia::source::TriviaSource, ShowInspectorUi,
-};
-
-use super::{
-    menu_button_style, menu_labeled_style, menu_row_style, menu_style, menu_text_input_style,
-    utils::{is_false, open_link},
-    widgets::{
-        multi_dropdown::MultiDropdown as QuillMultiDropdown,
-        text_input::{TextInput as QuillTextInput, TextInputType},
-        UseComponentOrDefault,
+    loading::TextureAssets,
+    lobby::HostLobby,
+    menu::{
+        menu_button_style, menu_labeled_style, menu_row_style, menu_style, menu_text_input_style,
+        utils::open_link,
+        widgets::{
+            multi_dropdown::MultiDropdown as QuillMultiDropdown,
+            text_input::{TextInput as QuillTextInput, TextInputType},
+            UseComponentOrDefault,
+        },
+        MenuStack, WhichMenu,
     },
-    MenuStack, WhichMenu,
+    trivia::source::TriviaSource,
+    ShowInspectorUi,
 };
 
 /// A menu for the game
-#[derive(Asset, Serialize, Deserialize, TypePath, Clone, Debug, PartialEq)]
+#[derive(Asset, Deserialize, TypePath, Clone, Debug, PartialEq)]
 pub struct Menu {
     /// The title of the menu
     title: String,
 
     /// Whether this is the main menu, or not
-    #[serde(skip_serializing_if = "is_false", default)]
+    #[serde(default)]
     main_menu: bool,
 
     /// The contents of the menu
@@ -97,7 +99,7 @@ impl ViewTemplate for Menu {
 }
 
 /// An item to render in the menu
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, TypePath)]
+#[derive(Clone, Debug, PartialEq, Deserialize, TypePath)]
 pub enum MenuItem {
     /// A label to display
     Label(Label),
@@ -151,7 +153,7 @@ impl ViewTemplate for MenuItem {
 }
 
 /// The action to perform when a button is clicked
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, TypePath)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Deserialize, TypePath)]
 pub enum MenuAction {
     /// Quit the game
     Quit,
@@ -169,7 +171,7 @@ pub enum MenuAction {
 
 /// A button to click
 /// Currently only supports the `Quit` and `Back` actions
-#[derive(Serialize, Deserialize, TypePath, Clone, Debug, PartialEq)]
+#[derive(Deserialize, TypePath, Clone, Debug, PartialEq)]
 pub struct Button {
     /// The label to display
     label: String,
@@ -222,7 +224,7 @@ impl ViewTemplate for Button {
 }
 
 /// A label to display
-#[derive(Serialize, Deserialize, TypePath, Clone, Debug, PartialEq)]
+#[derive(Deserialize, TypePath, Clone, Debug, PartialEq)]
 pub struct Label {
     /// The label to display
     label: String,
@@ -266,7 +268,7 @@ impl ViewTemplate for Label {
 }
 
 /// A link to open in a browser
-#[derive(Serialize, Deserialize, TypePath, Clone, Debug, PartialEq)]
+#[derive(Deserialize, TypePath, Clone, Debug, PartialEq)]
 pub struct Link {
     /// The label to display
     label: String,
@@ -303,7 +305,7 @@ impl ViewTemplate for Link {
 }
 
 /// The variant of the button: Primary or Default
-#[derive(Serialize, Deserialize, TypePath, Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
+#[derive(Deserialize, TypePath, Clone, Copy, Debug, PartialEq, Eq, Hash, Default)]
 pub enum MenuButtonVariant {
     /// The default button style
     #[default]
@@ -329,7 +331,7 @@ impl From<MenuButtonVariant> for ButtonVariant {
 }
 
 /// A button that switches to a different menu when clicked
-#[derive(Serialize, Deserialize, TypePath, Clone, Debug, PartialEq)]
+#[derive(Deserialize, TypePath, Clone, Debug, PartialEq)]
 pub struct SubMenu {
     /// The label to display on the button
     label: String,
@@ -365,7 +367,7 @@ impl ViewTemplate for SubMenu {
     }
 }
 
-#[derive(Serialize, Deserialize, TypePath, Clone, Debug, PartialEq)]
+#[derive(Deserialize, TypePath, Clone, Debug, PartialEq)]
 pub struct TextInput {
     /// The label to display
     label: String,
@@ -413,7 +415,7 @@ impl ViewTemplate for TextInput {
 }
 
 /// A slider to select a value
-#[derive(Serialize, Deserialize, TypePath, Clone, Debug, PartialEq)]
+#[derive(Deserialize, TypePath, Clone, Debug, PartialEq)]
 pub struct Slider {
     /// The label to display
     label: String,
@@ -470,7 +472,7 @@ impl ViewTemplate for Slider {
 }
 
 /// A row of several items
-#[derive(Serialize, Deserialize, TypePath, Clone, Debug, PartialEq)]
+#[derive(Deserialize, TypePath, Clone, Debug, PartialEq)]
 pub struct Row(Vec<MenuItem>);
 
 impl ViewTemplate for Row {
@@ -486,7 +488,7 @@ impl ViewTemplate for Row {
     }
 }
 
-#[derive(Serialize, Deserialize, TypePath, Clone, Debug, PartialEq)]
+#[derive(Deserialize, TypePath, Clone, Debug, PartialEq)]
 pub struct Dropdown {
     label: String,
     source: TriviaSource,
@@ -516,7 +518,7 @@ impl ViewTemplate for Dropdown {
     }
 }
 
-#[derive(Serialize, Deserialize, TypePath, Clone, Debug, PartialEq)]
+#[derive(Deserialize, TypePath, Clone, Debug, PartialEq)]
 pub struct MultiDropdown {
     /// The label to display
     label: String,
