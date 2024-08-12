@@ -5,6 +5,7 @@ publish = false
 authors = ["Kevin Oberlies <favilo@gmail.com>"]
 edition = "2021"
 exclude = ["dist", "build", "assets", "credits"]
+resolver = "2"
 
 [workspace]
 members = ["mobile"]
@@ -95,6 +96,8 @@ bevy_quill_obsidian = { git = "https://github.com/viridia/quill.git", rev = "cab
 serde = { version = "1.0.204", features = ["derive"] }
 bevy_common_assets = { version = "0.11.0", features = ["ron"] }
 bevy_embedded_assets = "0.11.0"
+bevy-inspector-egui = { version = "0.25.1" }
+bevy_egui = { version = "0.28.0" }
 
 [dependencies]
 bevy = { workspace = true }
@@ -114,8 +117,12 @@ bevy_quill_obsidian = { workspace = true }
 serde = { workspace = true }
 bevy_common_assets = { workspace = true }
 bevy_embedded_assets = { workspace = true }
-bevy-inspector-egui = { version = "0.25.1" }
-bevy_egui = { version = "0.28.0" }
+bevy-inspector-egui = { workspace = true }
+bevy_egui = { workspace = true }
+bevy_http_client = "0.6.0"
+bimap = { version = "0.6.3", features = ["serde"] }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 web-sys = { version = "0.3", features = ["Location"] }

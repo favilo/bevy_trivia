@@ -29,9 +29,7 @@ use bevy_quill_obsidian::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::loading::MenuAssets;
-
-use super::UseComponentOrDefault;
+use crate::{loading::MenuAssets, menu::widgets::UseComponentOrDefault};
 
 #[derive(Component, Debug, Default, Clone, Deref, DerefMut, PartialEq, Eq, Reflect)]
 pub struct TextInputValue(String);

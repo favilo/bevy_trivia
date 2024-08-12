@@ -1,11 +1,11 @@
 use ::serde::{Deserialize, Serialize};
-use bevy::{ecs::system::RunSystemOnce, prelude::*, ui};
+use bevy::{ecs::system::RunSystemOnce, prelude::*};
 use bevy_mod_stylebuilder::{StyleBuilder, StyleBuilderFont, StyleBuilderLayout};
 use bevy_quill::View;
 use bevy_quill_obsidian::colors;
 use serde::Menu;
 
-use crate::{loading::MenuAssets, GameState};
+use crate::{loading::MenuAssets, trivia::source::SourcePlugin, GameState};
 
 pub mod serde;
 pub mod utils;
@@ -17,7 +17,8 @@ pub struct MenuPlugin;
 /// The menu is only drawn during the State `GameState::Menu` and is removed when that state is exited
 impl Plugin for MenuPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<MenuStack>()
+        app.add_plugins(SourcePlugin)
+            .init_resource::<MenuStack>()
             .add_sub_state::<WhichMenu>()
             .add_systems(
                 StateTransition,
@@ -66,7 +67,7 @@ struct MenuMarker;
 fn menu_style(ss: &mut StyleBuilder) {
     ss.display(Display::Flex)
         .flex_direction(FlexDirection::Column)
-        .position(ui::PositionType::Absolute)
+        .position(PositionType::Absolute)
         .padding(50)
         .left(0)
         .right(0)
